@@ -1,5 +1,30 @@
 # Trustworthy Healthcare AI
 
+> **When a medical AI model reports 99% confidence, how trustworthy is that confidence?**
+
+This repository documents an ongoing research exploration into trustworthy
+machine learning for healthcare, with particular focus on uncertainty
+quantification, probability calibration, robustness under distribution shift,
+medical imaging, and multimodal AI.
+
+## Current Investigation
+
+**Experiment 001 — Baseline Medical Image Classification** ✅
+
+A baseline CNN achieved **88.46% accuracy** and **0.937 AUROC** on
+PneumoniaMNIST. However, analysis revealed substantial differences between
+sensitivity (98.46%) and specificity (71.79%), as well as an incorrect
+prediction made with approximately 99.98% pneumonia probability.
+
+This motivates the next research question:
+
+**Can the model's confidence actually be trusted?**
+
+**Experiment 002 — Confidence Calibration** 🔬 In progress
+
+
+# Trustworthy Healthcare AI
+
 A research portfolio exploring trustworthy artificial intelligence
 for healthcare, with a focus on uncertainty quantification,
 model calibration, robustness under distribution shift,
