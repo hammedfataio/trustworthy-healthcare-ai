@@ -1,14 +1,16 @@
 [project]
 name = "trustworthy-healthcare-ai"
 version = "0.1.0"
-description = "Add your description here"
+description = "Research experiments in trustworthy AI, uncertainty quantification, robustness, medical imaging, and multimodal machine learning for healthcare."
 readme = "README.md"
-requires-python = ">=3.13"
-dependencies = []
+requires-python = ">=3.11,<3.12"
 
-[project.scripts]
-trustworthy-healthcare-ai = "trustworthy_healthcare_ai:main"
-
-[build-system]
-requires = ["uv_build>=0.12.7,<0.13.0"]
-build-backend = "uv_build"
+dependencies = [
+    "torch",
+    "torchvision",
+    "numpy",
+    "pandas",
+    "scikit-learn",
+    "matplotlib",
+    "jupyter",
+]
