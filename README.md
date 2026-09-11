@@ -2,62 +2,92 @@
 
 > **When a medical AI model reports 99% confidence, how trustworthy is that confidence?**
 
-A research portfolio investigating **trustworthy artificial intelligence for healthcare**, with an emphasis on model reliability, probability calibration, uncertainty, robustness, and reproducible machine-learning evaluation.
+A research portfolio investigating **calibration, predictive uncertainty,
+robustness and reliability in healthcare AI**.
 
-The project explores an important question for high-stakes AI:
-
-> **Can we identify when a machine-learning model should — and should not — be trusted?**
-
----
-
-## 🔬 Research Motivation
-
-Predictive performance alone is not sufficient for high-stakes applications.
-
-A model may achieve strong accuracy or AUROC while still producing predictions that are:
-
-- overconfident,
-- poorly calibrated,
-- unreliable on difficult cases, or
-- vulnerable to changes in the underlying data distribution.
-
-In healthcare-oriented AI, these limitations are particularly important because model confidence may influence how predictions are interpreted.
-
-This project therefore investigates AI systems beyond conventional predictive performance, focusing on **confidence, calibration, uncertainty and reliability**.
+The project progressively examines whether machine-learning systems can
+recognise when their predictions should not be trusted.
 
 ---
 
-## 🧪 Experimental Roadmap
+## 🔬 Research Progress
 
-The portfolio is being developed incrementally through reproducible experiments.
+| Stage | Research Question | Status |
+|---|---|---|
+| 001 — Baseline | How well does the baseline model perform? | ✅ Complete |
+| 002 — Calibration | Can we trust its predicted probabilities? | ✅ Complete |
+| 003 — Uncertainty | Can uncertainty identify risky predictions? | 🔬 Next |
+| 004 — Distribution Shift | What happens when the data changes? | Planned |
+| 005 — Robustness | Does reliability survive challenging conditions? | Planned |
 
-### Experiment 001 — Baseline Classification & Confidence Analysis ✅
+---
 
-Established the baseline classification pipeline and examined model confidence alongside conventional predictive performance.
+## 📊 Baseline Result
 
-Observed performance:
+Using PneumoniaMNIST:
 
 | Metric | Result |
 |---|---:|
 | Accuracy | 88.46% |
 | AUROC | 0.9370 |
-| F1-score | 0.9143 |
 | Sensitivity | 98.46% |
 | Specificity | 71.79% |
+| F1-score | 91.43% |
 
-A particularly important observation was the presence of an **incorrect prediction made with high confidence**.
+Despite strong aggregate performance, the model produced an incorrect
+prediction with approximately **99.98% confidence**.
 
-This demonstrates why accuracy alone does not fully describe whether a model's predictions can be trusted.
+That failure became the motivation for the next stage of the research:
+**probability calibration and uncertainty.**
 
 ---
 
-### Experiment 002 — Probability Calibration ✅
+## 🧪 Current Finding
 
-Investigated whether predicted probabilities accurately reflect model confidence.
-
-**Temperature scaling** was applied as a post-hoc calibration method.
+Experiment 002 investigated probability calibration using reliability
+analysis, Brier score, ECE and temperature scaling.
 
 The learned temperature was:
 
-```text
-T = 1.007948
+`T = 1.007948`
+
+Temperature scaling produced negligible improvement, suggesting that
+calibration alone does not resolve the broader question of predictive
+uncertainty.
+
+This motivates **Experiment 003: Uncertainty Quantification**.
+
+---
+
+## 📚 Research Documentation
+
+For the full research reasoning, methodology and experimental progression:
+
+- [Research Log](docs/research_log.md)
+- [Experiment 002 — Calibration](docs/experiment_002_calibration.md)
+
+---
+
+## 🧭 Research Direction
+
+Baseline Classification  
+↓  
+Probability Calibration  
+↓  
+**Uncertainty Quantification**  
+↓  
+Distribution Shift  
+↓  
+Robustness  
+↓  
+Multimodal Clinical AI  
+↓  
+**Trustworthy Generative AI for Healthcare**
+
+---
+
+## ⚠️ Research Disclaimer
+
+This repository contains experimental research for educational and research
+purposes. It is not a medical device and should not be used for clinical
+diagnosis.
