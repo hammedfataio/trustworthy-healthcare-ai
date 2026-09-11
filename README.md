@@ -16,7 +16,7 @@ recognise when their predictions should not be trusted.
 |---|---|---|
 | 001 — Baseline | How well does the baseline model perform? | ✅ Complete |
 | 002 — Calibration | Can we trust its predicted probabilities? | ✅ Complete |
-| 003 — Uncertainty | Can uncertainty identify risky predictions? | 🔬 Next |
+| 003 — Uncertainty | Can uncertainty help identify risky predictions? | 🔬 Next |
 | 004 — Distribution Shift | What happens when the data changes? | Planned |
 | 005 — Robustness | Does reliability survive challenging conditions? | Planned |
 
