@@ -2,7 +2,7 @@
 
 > **When a medical AI model reports 99% confidence, how trustworthy is that confidence?**
 
-A research portfolio investigating **reliability, probability calibration, uncertainty and robustness in healthcare AI**.
+A research portfolio investigating **reliability, probability calibration, uncertainty, and robustness in healthcare AI**.
 
 The project moves beyond predictive accuracy to investigate a more important question for high-stakes artificial intelligence:
 
@@ -40,7 +40,7 @@ The model produced an **incorrect prediction with approximately 99.98% confidenc
 
 This high-confidence failure motivated the next stage of the research:
 
-**Can the model's confidence actually be trusted?**
+> **Can the model's confidence actually be trusted?**
 
 ---
 
@@ -79,29 +79,19 @@ This motivates the next question:
 
 The project follows a progressive experimental roadmap:
 
-**Predictive Performance**
-
-↓
-
-**Probability Calibration**
-
-↓
-
-**Predictive Uncertainty** ← *Next*
-
-↓
-
-**Distribution Shift**
-
-↓
-
-**Robustness**
-
-↓
-
+**Predictive Performance**  
+↓  
+**Probability Calibration**  
+↓  
+**Predictive Uncertainty** ← *Next*  
+↓  
+**Distribution Shift**  
+↓  
+**Robustness**  
+↓  
 **Trustworthy AI for Healthcare**
 
-Each experiment is designed to build on evidence from the previous stage rather than treating trustworthiness as a single metric.
+Each experiment builds on evidence from the previous stage rather than treating trustworthiness as a single metric.
 
 ---
 
@@ -111,8 +101,8 @@ Detailed research reasoning and experimental records are maintained separately f
 
 | Document | Purpose |
 |---|---|
-| [Research Log](docs/research_log.md) | Research reasoning, observations and project progression |
-| [Experiment 002 — Probability Calibration](docs/experiment_002_calibration.md) | Calibration methodology, results, interpretation and limitations |
+| [Research Log](docs/research_log.md) | Research reasoning, observations, and project progression |
+| [Experiment 002 — Probability Calibration](docs/experiment_002_calibration.md) | Calibration methodology, results, interpretation, and limitations |
 
 Additional experiment reports will be added as the research progresses.
 
