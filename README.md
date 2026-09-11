@@ -2,92 +2,131 @@
 
 > **When a medical AI model reports 99% confidence, how trustworthy is that confidence?**
 
-A research portfolio investigating **calibration, predictive uncertainty,
-robustness and reliability in healthcare AI**.
+A research portfolio investigating **reliability, probability calibration, uncertainty and robustness in healthcare AI**.
 
-The project progressively examines whether machine-learning systems can
-recognise when their predictions should not be trusted.
+The project moves beyond predictive accuracy to investigate a more important question for high-stakes artificial intelligence:
+
+> **Can we identify when a machine-learning model should — and should not — be trusted?**
 
 ---
 
 ## 🔬 Research Progress
 
-| Stage | Research Question | Status |
+| Experiment | Research Question | Status |
 |---|---|---|
-| 001 — Baseline | How well does the baseline model perform? | ✅ Complete |
-| 002 — Calibration | Can we trust its predicted probabilities? | ✅ Complete |
-| 003 — Uncertainty | Can uncertainty help identify risky predictions? | 🔬 Next |
-| 004 — Distribution Shift | What happens when the data changes? | Planned |
-| 005 — Robustness | Does reliability survive challenging conditions? | Planned |
+| 001 — Baseline Classification | How well does the baseline model perform? | ✅ Complete |
+| 002 — Probability Calibration | Can we trust the model's predicted probabilities? | ✅ Complete |
+| 003 — Uncertainty Quantification | Can uncertainty help identify risky predictions? | 🔬 Next |
+| 004 — Distribution Shift | What happens when the data distribution changes? | 📋 Planned |
+| 005 — Robustness | Does model reliability survive challenging conditions? | 📋 Planned |
 
 ---
 
-## 📊 Baseline Result
+## 📊 Baseline Findings
 
-Using PneumoniaMNIST:
+The baseline experiment established strong overall classification performance:
 
 | Metric | Result |
 |---|---:|
 | Accuracy | 88.46% |
 | AUROC | 0.9370 |
+| F1-score | 91.43% |
 | Sensitivity | 98.46% |
 | Specificity | 71.79% |
-| F1-score | 91.43% |
 
-Despite strong aggregate performance, the model produced an incorrect
-prediction with approximately **99.98% confidence**.
+However, aggregate performance did not tell the whole story.
 
-That failure became the motivation for the next stage of the research:
-**probability calibration and uncertainty.**
+The model produced an **incorrect prediction with approximately 99.98% confidence**.
+
+This high-confidence failure motivated the next stage of the research:
+
+**Can the model's confidence actually be trusted?**
 
 ---
 
-## 🧪 Current Finding
+## 🧪 Experiment 002 — Probability Calibration
 
-Experiment 002 investigated probability calibration using reliability
-analysis, Brier score, ECE and temperature scaling.
+Experiment 002 investigated model confidence using probability calibration and **temperature scaling**.
 
 The learned temperature was:
 
-`T = 1.007948`
+**T = `1.007948`**
 
-Temperature scaling produced negligible improvement, suggesting that
-calibration alone does not resolve the broader question of predictive
-uncertainty.
+Validation Negative Log-Likelihood changed from:
 
-This motivates **Experiment 003: Uncertainty Quantification**.
+| Before | After |
+|---:|---:|
+| 0.097432 | 0.097427 |
+
+Classification performance remained unchanged:
+
+- Accuracy: `0.8846 → 0.8846`
+- AUROC: `0.9370 → 0.9370`
+- F1-score: `0.9143 → 0.9143`
+- Changed class predictions: `0`
+
+The small calibration adjustment suggests that **global probability calibration alone does not resolve the broader trustworthiness problem**.
+
+This motivates the next question:
+
+> **Can prediction-level uncertainty provide information that confidence alone cannot?**
+
+📄 [Read the full Experiment 002 report](docs/experiment_002_calibration.md)
+
+---
+
+## 🧠 Research Direction
+
+The project follows a progressive experimental roadmap:
+
+**Predictive Performance**
+
+↓
+
+**Probability Calibration**
+
+↓
+
+**Predictive Uncertainty** ← *Next*
+
+↓
+
+**Distribution Shift**
+
+↓
+
+**Robustness**
+
+↓
+
+**Trustworthy AI for Healthcare**
+
+Each experiment is designed to build on evidence from the previous stage rather than treating trustworthiness as a single metric.
 
 ---
 
 ## 📚 Research Documentation
 
-For the full research reasoning, methodology and experimental progression:
+Detailed research reasoning and experimental records are maintained separately from this README.
 
-- [Research Log](docs/research_log.md)
-- [Experiment 002 — Calibration](docs/experiment_002_calibration.md)
+| Document | Purpose |
+|---|---|
+| [Research Log](docs/research_log.md) | Research reasoning, observations and project progression |
+| [Experiment 002 — Probability Calibration](docs/experiment_002_calibration.md) | Calibration methodology, results, interpretation and limitations |
 
----
-
-## 🧭 Research Direction
-
-Baseline Classification  
-↓  
-Probability Calibration  
-↓  
-**Uncertainty Quantification**  
-↓  
-Distribution Shift  
-↓  
-Robustness  
-↓  
-Multimodal Clinical AI  
-↓  
-**Trustworthy Generative AI for Healthcare**
+Additional experiment reports will be added as the research progresses.
 
 ---
 
-## ⚠️ Research Disclaimer
+## 📁 Repository Structure
 
-This repository contains experimental research for educational and research
-purposes. It is not a medical device and should not be used for clinical
-diagnosis.
+```text
+trustworthy-healthcare-ai/
+├── docs/          # Research documentation and experiment reports
+├── experiments/   # Experiment workflows/configurations
+├── notebooks/     # Analysis and experimental notebooks
+├── results/       # Experimental outputs
+├── src/           # Reusable source code
+├── tests/         # Automated tests
+├── pyproject.toml # Python project configuration
+└── uv.lock        # Locked dependency environment
