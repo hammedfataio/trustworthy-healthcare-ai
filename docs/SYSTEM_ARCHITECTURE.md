@@ -1,1001 +1,951 @@
 # System Architecture
 
-## Trustworthy Healthcare AI
+## Trustworthy Healthcare AI Research Platform
 
-**Architecture for an Evidence-Driven, Uncertainty-Aware, Robust, and Multimodal Healthcare AI Research System**
+This document describes the evolving system architecture for the **Trustworthy Healthcare AI** research programme.
 
----
+The architecture is intentionally **evidence-driven**.
 
-## 1. Purpose
+Components are not treated as established system capabilities simply because they appear in the target architecture. Each major trustworthiness capability must first be investigated experimentally, evaluated, documented, and supported by evidence.
 
-This document defines the target architecture for the Trustworthy Healthcare AI project.
+The system therefore develops through the following principle:
 
-The project is not intended to remain a collection of independent machine-learning notebooks. Its longer-term objective is to develop a modular research system in which predictive models are combined with mechanisms for evaluating and communicating model reliability.
-
-The architecture therefore separates:
-
-- predictive modelling;
-- probability calibration;
-- uncertainty estimation;
-- selective prediction and referral;
-- distribution-shift evaluation;
-- robustness analysis;
-- multimodal modelling;
-- generative AI;
-- system delivery; and
-- monitoring and audit.
-
-A central architectural principle is:
-
-> **A model prediction should not automatically be treated as a trustworthy decision simply because the model can produce a confidence score.**
-
-The system is therefore designed around both **prediction** and **reliability assessment**.
-
----
-
-## 2. Architecture Philosophy
-
-The architecture follows an **evidence-driven integration model**.
-
-Components may appear in the target architecture before they are implemented, but their presence in this document does not imply that they have already been validated.
-
-The development process follows:
-
-**Research Question  
-→ Experiment  
-→ Evidence  
-→ Interpretation  
-→ Engineering Decision  
-→ System Integration**
-
-This prevents the system architecture from becoming disconnected from the scientific research programme.
-
-A component should only move toward integration when experimental evidence provides a reasonable basis for doing so.
-
----
-
-## 3. Architecture Status Model
-
-To distinguish implemented work from future plans, components are assigned one of four states.
-
-| Status | Meaning |
-|---|---|
-| **Implemented** | Code or artifact currently exists in the repository |
-| **Experimentally Evaluated** | The component or method has been investigated through a completed experiment |
-| **Planned** | Defined in the research roadmap but not yet experimentally completed |
-| **Future Research** | Longer-term architectural direction whose final design depends on future evidence |
-
-This distinction is important because the repository represents an evolving research system rather than a finished clinical product.
-
----
-
-## 4. Current System State
-
-At the current stage, the project has established the initial predictive and calibration research foundation.
-
-### Current evidence
-
-**EXP-001 — Baseline Medical Image Classification**
-
-A CNN baseline has been implemented and evaluated using PneumoniaMNIST.
-
-This provides the first version of the:
-
-**Prediction Engine**
-
----
-
-**EXP-002 — Probability Calibration**
-
-The baseline model's confidence behaviour has been investigated using reliability analysis, Brier score, Expected Calibration Error, high-confidence error analysis, and temperature scaling.
-
-This provides experimental evidence for the:
-
-**Calibration and Confidence Evaluation Layer**
-
-Temperature scaling produced negligible improvement in the current experimental setting, so it should not automatically be treated as the final calibration mechanism for the integrated system.
-
----
-
-## 5. Target System Overview
-
-The longer-term architecture is:
-
-```text
-                 HEALTHCARE / RESEARCH INPUTS
-                            │
-              ┌─────────────┼─────────────┐
-              │             │             │
-            Image       Structured       Text
-                          Clinical
-                            Data
-              │             │             │
-              └─────────────┼─────────────┘
-                            │
-                            ▼
-                  DATA PROCESSING LAYER
-                            │
-                            ▼
-                  MODEL / INFERENCE LAYER
-                            │
-                  ┌─────────┴─────────┐
-                  │                   │
-             Prediction         Generated /
-                                Multimodal
-                                  Output
-                  │                   │
-                  └─────────┬─────────┘
-                            │
-                            ▼
-                 TRUSTWORTHINESS LAYER
-                            │
-       ┌────────────────────┼────────────────────┐
-       │                    │                    │
-       ▼                    ▼                    ▼
-   Calibration         Uncertainty         Robustness /
-                       Estimation          Shift Analysis
-       │                    │                    │
-       └────────────────────┼────────────────────┘
-                            │
-                            ▼
-                    RISK ASSESSMENT
-                            │
-                ┌───────────┴───────────┐
-                │                       │
-                ▼                       ▼
-        Lower-risk output        Uncertain /
-                                potentially
-                              unreliable output
-                │                       │
-                ▼                       ▼
-         Return model             Flag / Refer
-            output                for review
-                │                       │
-                └───────────┬───────────┘
-                            │
-                            ▼
-                  APPLICATION / API LAYER
-                            │
-                            ▼
-                   RESEARCH INTERFACE
-                            │
-                            ▼
-                  MONITORING AND AUDIT
+```mermaid
+flowchart LR
+    Q["Research Question"] --> E["Experiment"]
+    E --> V["Evaluation"]
+    V --> EV["Evidence"]
+    EV --> C["Validated Component"]
+    C --> S["Integrated Research System"]
 ```
 
-This is the **target research architecture**.
-
-It does not imply that every component has already been implemented.
+> **Research evidence comes before system integration.**
 
 ---
 
-## 6. Layer 1 — Healthcare and Research Inputs
+# 1. Architecture at a Glance
 
-The system is designed to evolve from single-modality medical imaging toward multimodal healthcare data.
+The long-term objective is an integrated **multimodal trustworthy healthcare AI research prototype** capable of processing different forms of healthcare information while evaluating the reliability of its outputs.
 
-Potential input modalities include:
+```mermaid
+flowchart TD
 
-### Medical Imaging
+    IMG["Medical Images<br/>X-ray / CT / MRI"]
+    TXT["Clinical Text<br/>Notes / Reports"]
+    TAB["Structured Data<br/>Labs / Patient Variables"]
+
+    IMG --> IE["Image Encoder"]
+    TXT --> TE["Text Encoder"]
+    TAB --> DE["Tabular Encoder"]
+
+    IE --> FUSION["Multimodal Fusion"]
+    TE --> FUSION
+    DE --> FUSION
+
+    FUSION --> MODEL["Predictive / Multimodal / Generative Model"]
+
+    MODEL --> OUTPUT["Prediction / Generated Output"]
+
+    OUTPUT --> TRUST["Trustworthiness Layer"]
+
+    TRUST --> CAL["Calibration"]
+    TRUST --> UQ["Uncertainty"]
+    TRUST --> SHIFT["Distribution Shift"]
+    TRUST --> ROB["Robustness"]
+
+    CAL --> RISK["Risk Assessment"]
+    UQ --> RISK
+    SHIFT --> RISK
+    ROB --> RISK
+
+    RISK --> LOW["Lower-Risk Output"]
+    RISK --> HIGH["Higher Uncertainty / Risk"]
+
+    HIGH --> REVIEW["Flag for Human Review"]
+
+    LOW --> INTERFACE["Research Interface"]
+    REVIEW --> INTERFACE
+
+    INTERFACE --> AUDIT["Audit / Monitoring"]
+```
+
+This diagram represents the **target research architecture**, not the current implementation state.
+
+---
+
+# 2. Current Implementation State
+
+The project is currently much smaller than the target architecture.
+
+The implemented research pipeline is:
+
+```mermaid
+flowchart LR
+
+    DATA["PneumoniaMNIST"] --> PRE["Data Loading"]
+    PRE --> CNN["Baseline CNN"]
+    CNN --> LOGIT["Model Logit"]
+    LOGIT --> PROB["Probability"]
+    PROB --> METRICS["Predictive Evaluation"]
+    PROB --> CAL["Calibration Evaluation"]
+
+    METRICS --> EXP1["EXP-001 Evidence"]
+    CAL --> EXP2["EXP-002 Evidence"]
+```
+
+Currently established:
+
+| Capability | Evidence | Status |
+|---|---|---|
+| Medical-image input | PneumoniaMNIST | Implemented |
+| Binary image classification | EXP-001 | Implemented |
+| Predictive evaluation | EXP-001 | Implemented |
+| Probability calibration analysis | EXP-002 | Implemented |
+| Temperature scaling investigation | EXP-002 | Implemented |
+| Explicit uncertainty quantification | EXP-003 | Next |
+| Selective prediction / referral | EXP-004 | Planned |
+| Distribution-shift evaluation | EXP-005 | Planned |
+| Robustness evaluation | EXP-006 | Planned |
+| Multimodal modelling | Future research | Not implemented |
+| Generative / VLM capability | Future research | Not implemented |
+| Integrated research interface | Future system stage | Not implemented |
+
+This distinction prevents the architecture from overstating what the repository currently demonstrates.
+
+---
+
+# 3. Research-to-System Progression
+
+Each experiment answers a research question while also preparing a future system capability.
+
+```mermaid
+flowchart TD
+
+    E1["EXP-001<br/>Baseline Classification"]
+    E2["EXP-002<br/>Probability Calibration"]
+    E3["EXP-003<br/>Uncertainty Quantification"]
+    E4["EXP-004<br/>Selective Prediction"]
+    E5["EXP-005<br/>Distribution Shift"]
+    E6["EXP-006<br/>Robustness"]
+    MM["Multimodal AI"]
+    GEN["Generative / VLM AI"]
+    SYS["Integrated Research Prototype"]
+
+    E1 --> E2
+    E2 --> E3
+    E3 --> E4
+    E4 --> E5
+    E5 --> E6
+    E6 --> MM
+    MM --> GEN
+    GEN --> SYS
+```
+
+Current position:
+
+```text
+EXP-001  ✅ Complete
+    ↓
+EXP-002  ✅ Complete
+    ↓
+EXP-003  🔬 Next
+    ↓
+EXP-004  📋 Planned
+    ↓
+EXP-005  📋 Planned
+    ↓
+EXP-006  📋 Planned
+```
+
+The roadmap may change if experimental evidence justifies a different research direction.
+
+---
+
+# 4. Capability Evidence Map
+
+The architecture connects research evidence to system capabilities.
+
+```mermaid
+flowchart LR
+
+    EXP1["EXP-001"] --> PRED["Prediction Engine"]
+
+    EXP2["EXP-002"] --> CAL["Calibration Layer"]
+
+    EXP3["EXP-003"] --> UQ["Uncertainty Engine"]
+
+    EXP4["EXP-004"] --> REF["Selective Prediction / Referral"]
+
+    EXP5["EXP-005"] --> SHIFT["Shift Evaluation"]
+
+    EXP6["EXP-006"] --> ROB["Robustness Evaluation"]
+
+    PRED --> TRUST["Trustworthy AI Pipeline"]
+    CAL --> TRUST
+    UQ --> TRUST
+    REF --> TRUST
+    SHIFT --> TRUST
+    ROB --> TRUST
+```
+
+Importantly, a component is not considered validated merely because an experiment exists.
+
+The experiment must produce interpretable evidence supporting its intended use.
+
+---
+
+# 5. EXP-001 — Prediction Engine
+
+EXP-001 established the initial predictive component.
+
+```mermaid
+flowchart LR
+
+    X["Chest X-ray"] --> CNN["Baseline CNN"]
+    CNN --> L["Binary Logit"]
+    L --> P["Pneumonia Probability"]
+    P --> C["Class Prediction"]
+    C --> M["Performance Evaluation"]
+```
+
+The model demonstrated strong predictive performance on the held-out PneumoniaMNIST test split.
+
+However, EXP-001 also identified highly confident incorrect predictions.
+
+Therefore:
+
+```mermaid
+flowchart LR
+
+    A["Strong Accuracy / AUROC"] --> B{"Enough for Trust?"}
+    B -->|"No"| C["Investigate Confidence Reliability"]
+    C --> D["EXP-002"]
+```
+
+This observation created the motivation for probability-calibration analysis.
+
+---
+
+# 6. EXP-002 — Calibration Layer
+
+EXP-002 investigated whether model probabilities reliably represented confidence.
+
+```mermaid
+flowchart LR
+
+    CNN["EXP-001 CNN"] --> LOGITS["Logits"]
+    LOGITS --> RAW["Raw Probabilities"]
+
+    RAW --> CE["Calibration Evaluation"]
+    RAW --> TS["Temperature Scaling"]
+
+    TS --> CP["Calibrated Probabilities"]
+
+    CE --> COMP["Compare Reliability"]
+    CP --> COMP
+```
+
+Temperature scaling was fitted on the validation set.
+
+Verified fitting result:
+
+```text
+Temperature = 1.007948
+
+Validation NLL
+Before: 0.097432
+After:  0.097427
+```
+
+The observed improvement was negligible under the evaluated experimental conditions.
+
+This result motivates a more prediction-specific question:
+
+> Can uncertainty provide useful information about individual model failures?
+
+That question leads to EXP-003.
+
+---
+
+# 7. EXP-003 — Uncertainty Engine
+
+**Status: Next**
+
+EXP-003 will investigate whether greater estimated uncertainty corresponds to a greater likelihood of prediction error.
+
+The initial experimental architecture is:
+
+```mermaid
+flowchart LR
+
+    IMG["Medical Image"] --> CNN["Baseline CNN"]
+
+    CNN --> P["Predicted Probability"]
+
+    P --> ENT["Predictive Entropy"]
+
+    ENT --> COR["Correct Predictions"]
+    ENT --> ERR["Incorrect Predictions"]
+
+    COR --> COMP["Compare Uncertainty"]
+    ERR --> COMP
+
+    COMP --> AUROC["Error-Detection AUROC"]
+    COMP --> AUPRC["Error-Detection AUPRC"]
+
+    AUROC --> QUESTION["Can uncertainty identify model failure?"]
+    AUPRC --> QUESTION
+```
+
+Predictive entropy will provide an initial deterministic uncertainty baseline.
+
+An explicit uncertainty-aware approach may subsequently be compared against this baseline.
+
+Possible methods include:
+
+- MC Dropout; or
+- Deep Ensembles.
+
+The final method will be selected based on experimental justification rather than convenience alone.
+
+---
+
+# 8. Selective Prediction and Referral
+
+If EXP-003 demonstrates that uncertainty contains useful information about prediction failure, EXP-004 will investigate whether that information can support selective prediction.
+
+The conceptual architecture is:
+
+```mermaid
+flowchart TD
+
+    MODEL["Model Prediction"] --> UQ["Uncertainty Estimate"]
+
+    UQ --> DECISION{"Uncertainty<br/>Acceptable?"}
+
+    DECISION -->|"Yes"| ACCEPT["Retain Prediction"]
+    DECISION -->|"No"| REFER["Refer / Abstain"]
+
+    ACCEPT --> COVERAGE["Coverage"]
+    REFER --> COVERAGE
+
+    COVERAGE --> RISK["Risk-Coverage Evaluation"]
+```
+
+The objective is not simply to reject difficult cases.
+
+The research question is whether uncertainty-based referral can reduce error among retained predictions while maintaining meaningful coverage.
+
+Threshold decisions must be based on validation data rather than tuned on the held-out test set.
+
+---
+
+# 9. Distribution Shift
+
+Healthcare models may encounter data that differs from their training distribution.
+
+EXP-005 will investigate this problem.
+
+```mermaid
+flowchart LR
+
+    TRAIN["Training Distribution"] --> MODEL["Trained Model"]
+
+    ID["In-Distribution Data"] --> MODEL
+    SHIFT["Shifted Data"] --> MODEL
+
+    MODEL --> PERF["Performance"]
+    MODEL --> UQ["Uncertainty"]
+    MODEL --> CAL["Calibration"]
+
+    PERF --> COMP["Compare Behaviour"]
+    UQ --> COMP
+    CAL --> COMP
+```
+
+Important questions include:
+
+- Does predictive performance deteriorate?
+- Does calibration deteriorate?
+- Does uncertainty increase?
+- Can uncertainty identify unreliable shifted cases?
+
+A trustworthy uncertainty mechanism should ideally become informative when the model encounters unfamiliar conditions.
+
+---
+
+# 10. Robustness Evaluation
+
+EXP-006 will investigate model behaviour under controlled perturbations.
+
+Conceptually:
+
+```mermaid
+flowchart LR
+
+    CLEAN["Original Input"] --> MODEL["Model"]
+    PERT["Perturbed Input"] --> MODEL
+
+    MODEL --> PRED["Prediction"]
+    MODEL --> CONF["Confidence"]
+    MODEL --> UQ["Uncertainty"]
+
+    PRED --> COMP["Robustness Comparison"]
+    CONF --> COMP
+    UQ --> COMP
+```
+
+Potential perturbations may include controlled changes to image characteristics where scientifically justified.
+
+The exact perturbation protocol will be defined before the experiment.
+
+---
+
+# 11. Multimodal Healthcare AI
+
+The longer-term architecture extends beyond image-only classification.
+
+Healthcare information naturally exists across multiple modalities.
+
+Potential research inputs include:
+
+```mermaid
+flowchart TD
+
+    PAT["Patient / Clinical Case"]
+
+    PAT --> IMG["Medical Imaging"]
+    PAT --> TXT["Clinical Text"]
+    PAT --> LAB["Laboratory Results"]
+    PAT --> TAB["Structured Variables"]
+
+    IMG --> MM["Multimodal Representation"]
+    TXT --> MM
+    LAB --> MM
+    TAB --> MM
+
+    MM --> MODEL["Multimodal Model"]
+```
 
 Examples may include:
 
-- chest radiographs;
-- dental radiographs;
+### Imaging
+
+- radiographs;
 - CT;
-- MRI;
-- ultrasound; and
-- other clinically appropriate imaging modalities.
+- MRI; or
+- other clinically relevant imaging modalities.
 
-The current experimental foundation uses PneumoniaMNIST.
-
-### Structured Clinical Data
-
-Future experiments may investigate variables such as:
-
-- demographics;
-- measurements;
-- laboratory values;
-- clinical observations; and
-- other structured variables where appropriate datasets are available.
-
-### Clinical Text
-
-Later multimodal or generative experiments may investigate:
+### Clinical text
 
 - clinical notes;
-- reports;
-- structured textual descriptions; or
-- other appropriately governed textual healthcare data.
+- radiology reports;
+- medical histories; or
+- other textual clinical context.
 
-The addition of any modality will depend on the research question, dataset suitability, licensing, privacy considerations, and experimental design.
+### Structured information
 
----
+- age;
+- laboratory measurements;
+- physiological observations;
+- coded variables; or
+- other tabular features.
 
-## 7. Layer 2 — Data Processing
-
-The data-processing layer converts raw research inputs into representations suitable for modelling.
-
-Potential responsibilities include:
-
-- dataset loading;
-- train/validation/test separation;
-- image transformations;
-- normalisation;
-- tensor conversion;
-- structured-data preprocessing;
-- text preprocessing;
-- missing-value handling;
-- modality alignment;
-- augmentation where experimentally justified; and
-- data-quality checks.
-
-The architecture should preserve separation between:
-
-**training data → validation data → held-out test data**
-
-to reduce the risk of evaluation leakage.
-
-Where possible, reusable processing logic should migrate from notebooks into the `src/` codebase as the project matures.
+The exact modalities used in future experiments will depend on suitable datasets and research questions.
 
 ---
 
-## 8. Layer 3 — Model and Inference
+# 12. Multimodal Fusion
 
-The model layer produces the primary predictive or generative output.
+Different modalities require modality-appropriate representations.
 
-### Current Model
+The target conceptual design is:
 
-The current baseline is a lightweight convolutional neural network for binary pneumonia classification.
+```mermaid
+flowchart LR
 
-Its purpose is not to establish state-of-the-art performance.
+    IMG["Image"] --> IE["Image Encoder"]
+    TXT["Clinical Text"] --> TE["Text Encoder"]
+    TAB["Tabular Data"] --> TBE["Tabular Encoder"]
 
-It provides a controlled experimental model for investigating trustworthiness properties.
+    IE --> F["Fusion Layer"]
+    TE --> F
+    TBE --> F
 
-### Future Models
+    F --> REPRESENT["Joint Representation"]
+    REPRESENT --> TASK["Prediction / Generation"]
+```
 
-Later research may investigate:
+Future research may compare different fusion strategies rather than assuming one approach is optimal.
 
-- stronger convolutional architectures;
-- pretrained vision models;
-- uncertainty-aware architectures;
-- multimodal neural networks;
-- vision-language models;
-- large language models; and
-- other generative or multimodal architectures justified by the research question.
+Possible research directions include:
 
-Model complexity should increase when scientifically justified rather than simply to make the system larger.
+- early fusion;
+- intermediate fusion;
+- late fusion;
+- cross-attention; and
+- vision-language architectures.
 
----
-
-## 9. Layer 4 — Trustworthiness Layer
-
-The trustworthiness layer is the central architectural contribution of the project.
-
-Instead of treating the model's raw output as sufficient, the system introduces additional evaluation between model inference and downstream use.
-
-The layer is expected to contain several related components.
+These remain future research directions and are not current repository capabilities.
 
 ---
 
-### 9.1 Probability Calibration
+# 13. Trustworthy Generative and Vision-Language AI
 
-**Purpose:** determine whether predicted probabilities correspond meaningfully to observed outcomes.
-
-Potential methods may include:
-
-- temperature scaling;
-- alternative post-hoc calibration methods; and
-- calibration-aware modelling approaches.
-
-Current evidence from EXP-002 shows that global temperature scaling produced negligible improvement for the existing baseline.
-
-Therefore, the architecture does not assume temperature scaling is the final calibration solution.
-
-**Current status: Experimentally Evaluated**
-
----
-
-### 9.2 Uncertainty Quantification
-
-**Purpose:** estimate how uncertain the system is about individual predictions.
-
-EXP-003 will investigate whether uncertainty estimates provide useful information beyond deterministic confidence.
-
-Potential approaches may include:
-
-- predictive entropy;
-- stochastic inference;
-- Monte Carlo dropout where architecturally appropriate;
-- ensemble-based uncertainty;
-- or other uncertainty methods supported by the literature and experimental design.
-
-The specific method should be selected before implementation and justified scientifically.
-
-**Current status: Planned**
-
----
-
-### 9.3 Selective Prediction and Referral
-
-A trustworthy system should not necessarily treat every prediction equally.
-
-Selective prediction investigates whether the system can identify predictions for which automated output should be treated cautiously.
+The later research programme may investigate models capable of combining medical images with textual context and generating clinically relevant research outputs.
 
 Conceptually:
 
-```text
-Prediction
-    │
-    ▼
-Uncertainty / Risk Estimate
-    │
-    ├──────── Low estimated risk ────────► Return prediction
-    │
-    └──────── High estimated risk ───────► Flag for review
+```mermaid
+flowchart TD
+
+    IMG["Medical Image"] --> VLM["Vision-Language Model"]
+    CONTEXT["Clinical Context"] --> VLM
+
+    VLM --> GEN["Generated Output"]
+
+    GEN --> VERIFY["Trustworthiness Evaluation"]
+
+    VERIFY --> UNC["Uncertainty"]
+    VERIFY --> FACT["Output Consistency"]
+    VERIFY --> SHIFT["Distribution Shift"]
+    VERIFY --> ROB["Robustness"]
+
+    UNC --> RISK["Risk Assessment"]
+    FACT --> RISK
+    SHIFT --> RISK
+    ROB --> RISK
 ```
 
-This creates a potential **abstention or referral mechanism**.
-
-The research question is not simply whether uncertainty can be calculated, but whether it is sufficiently informative to improve system behaviour when uncertain cases are handled differently.
-
-Potential evaluation may include:
-
-- coverage;
-- selective risk;
-- risk-coverage curves;
-- retained-case performance; and
-- error concentration among referred cases.
-
-Referral thresholds should be determined using validation data or another appropriately designed procedure rather than optimised on the held-out test set.
-
-**Current status: Planned**
-
----
-
-### 9.4 Distribution-Shift Evaluation
-
-Healthcare data encountered after model development may differ from the data used during training.
-
-Distribution-shift experiments will investigate:
-
-> **What happens when the model encounters data that differ systematically from its original training conditions?**
-
-The evaluation should examine not only predictive degradation but also whether:
-
-- calibration changes;
-- uncertainty increases;
-- failure detection improves or deteriorates; and
-- selective prediction remains useful.
-
-This connects robustness research directly to the trustworthiness layer.
-
-**Current status: Planned**
-
----
-
-### 9.5 Robustness Analysis
-
-Robustness experiments will evaluate model behaviour when inputs are altered under controlled conditions.
-
-Depending on the research question, this may include appropriate variations in:
-
-- image quality;
-- noise;
-- contrast;
-- acquisition-like perturbations;
-- missing information; or
-- other relevant transformations.
-
-The objective is not simply to create difficult examples.
-
-The objective is to understand:
-
-> **How does model reliability change as input conditions move away from the conditions under which the model was developed?**
-
-**Current status: Planned**
-
----
-
-## 10. Layer 5 — Risk Assessment
-
-The risk-assessment layer combines evidence from the predictive and trustworthiness components.
-
-A future risk assessment may consider:
-
-```text
-Prediction
-    +
-Predicted Probability
-    +
-Calibration Information
-    +
-Uncertainty
-    +
-Shift / Robustness Signals
-    ↓
-Risk-Aware System Behaviour
-```
-
-The exact combination should not be predetermined before supporting experiments are completed.
-
-The research programme will determine which signals are genuinely informative.
-
-This layer is therefore currently an architectural target rather than an implemented decision mechanism.
-
-**Current status: Future Research**
-
----
-
-## 11. Layer 6 — Referral / Abstention
-
-A central future capability is the ability to distinguish between:
-
-**predictions suitable for ordinary model output**
-
-and
-
-**predictions that warrant additional review because the system lacks sufficient evidence for reliability.**
-
-Conceptually:
-
-```text
-                    Model Output
-                         │
-                         ▼
-                  Reliability Check
-                         │
-              ┌──────────┴──────────┐
-              │                     │
-        Acceptable Risk         Elevated Risk
-              │                     │
-              ▼                     ▼
-       Return Prediction       Flag for Review
-```
-
-This mechanism should not be described as a clinical referral system unless and until it is evaluated in an appropriate clinical context.
-
-Within this project, it represents a **research prototype for selective prediction and risk-aware AI behaviour**.
-
----
-
-## 12. Layer 7 — Multimodal AI
-
-The architecture is designed to evolve beyond a single image input.
-
-A future multimodal system may combine:
-
-```text
-Medical Image ─────┐
-                   │
-Clinical Data ─────┼────► Multimodal Representation
-                   │
-Clinical Text ─────┘
-                            │
-                            ▼
-                    Predictive /
-                    Generative Model
-```
-
-Multimodal research introduces additional trustworthiness questions.
+At this stage, new research questions emerge.
 
 For example:
 
-- What happens when modalities disagree?
-- How should uncertainty be represented across modalities?
-- What happens when one modality is missing?
-- Does one modality dominate the prediction?
-- Does multimodal fusion improve reliability or merely predictive performance?
-- How does distribution shift affect individual modalities?
-- Can uncertainty help detect conflicting evidence?
+- Does generated text correspond to the available evidence?
+- Does the model invent unsupported findings?
+- Can uncertainty identify unreliable generations?
+- What happens under distribution shift?
+- Does multimodal context improve reliability?
+- Can high-risk outputs be detected before presentation?
 
-These questions provide a bridge between the initial medical imaging experiments and the longer-term trustworthy generative AI direction.
-
-**Current status: Future Research**
+These questions connect predictive trustworthiness research with trustworthy generative AI.
 
 ---
 
-## 13. Layer 8 — Generative and Vision-Language AI
+# 14. Trustworthiness Layer
 
-Generative models introduce challenges that differ from binary classification.
+The long-term system separates model output from reliability assessment.
 
-A classifier may produce:
+```mermaid
+flowchart TD
 
-```text
-Pneumonia probability = 0.82
+    MODEL["Model Output"] --> TRUST["Trustworthiness Layer"]
+
+    TRUST --> CAL["Calibration"]
+    TRUST --> UQ["Uncertainty"]
+    TRUST --> SHIFT["Shift Evaluation"]
+    TRUST --> ROB["Robustness"]
+    TRUST --> CONS["Output Consistency"]
+
+    CAL --> RISK["Risk Assessment"]
+    UQ --> RISK
+    SHIFT --> RISK
+    ROB --> RISK
+    CONS --> RISK
 ```
 
-A generative model may produce:
+This separation is important.
 
-```text
-Image + clinical context
-        ↓
-Generated interpretation
-        ↓
-Clinical-language response
-```
-
-Trustworthiness must therefore eventually extend beyond probability calibration.
-
-Future research may investigate:
-
-- uncertainty in generated outputs;
-- hallucination or unsupported generation;
-- multimodal consistency;
-- robustness under distribution shift;
-- confidence communication;
-- factual grounding;
-- evaluation frameworks for generated clinical content; and
-- mechanisms for identifying outputs requiring review.
-
-This stage represents the longer-term transition toward **trustworthy generative healthcare AI**.
-
-**Current status: Future Research**
+The model producing an answer should not automatically imply that the answer is reliable.
 
 ---
 
-## 14. Layer 9 — Application and API Layer
+# 15. Risk and Referral Layer
 
-Once research components become sufficiently stable, reusable system interfaces can be introduced.
+A future research prototype may use reliability signals to determine whether an output should be presented normally or flagged for review.
 
-A future architecture may include:
+```mermaid
+flowchart TD
 
-```text
-Research Interface
-        │
-        ▼
-       API
-        │
-        ▼
-Inference Service
-        │
-        ▼
-Prediction Model
-        │
-        ▼
-Trustworthiness Engine
-        │
-        ▼
-Risk-Aware Response
+    OUT["Model Output"] --> TRUST["Trustworthiness Signals"]
+
+    TRUST --> RISK["Risk Assessment"]
+
+    RISK --> DEC{"Reliability<br/>Acceptable?"}
+
+    DEC -->|"Yes"| RESULT["Present Research Output"]
+    DEC -->|"No"| FLAG["Flag as Higher Risk"]
+
+    FLAG --> HUMAN["Human Review"]
+
+    RESULT --> LOG["Audit Record"]
+    HUMAN --> LOG
 ```
 
-Potential engineering responsibilities include:
-
-- request validation;
-- inference orchestration;
-- model loading;
-- structured responses;
-- error handling;
-- logging;
-- version tracking; and
-- service health checks.
-
-This layer should be built after the scientific behaviour of the core components is sufficiently understood.
-
-**Current status: Future Engineering**
+This architecture supports **human oversight** rather than autonomous clinical decision-making.
 
 ---
 
-## 15. Layer 10 — Research Interface
+# 16. Research Interface
 
-A future research interface may expose:
+The final prototype may expose the integrated pipeline through a research-oriented interface.
 
-- input data;
-- model prediction;
+A possible interaction flow is:
+
+```mermaid
+flowchart LR
+
+    USER["Research User"] --> INPUT["Provide Case Inputs"]
+
+    INPUT --> PIPE["AI Pipeline"]
+
+    PIPE --> PRED["Prediction / Generation"]
+    PIPE --> TRUST["Reliability Signals"]
+
+    PRED --> UI["Research Interface"]
+    TRUST --> UI
+
+    UI --> REVIEW["Interpret / Review"]
+```
+
+A future interface might present:
+
+- model output;
 - predicted probability;
 - uncertainty estimate;
-- calibration information;
-- risk/referral status;
-- model/version information; and
-- relevant experimental metadata.
+- reliability indicators;
+- distribution-shift information;
+- referral status; and
+- experimental metadata.
 
-The interface should prioritise transparent presentation of model behaviour rather than presenting the system as clinically validated software.
-
-A possible conceptual output is:
-
-```text
-Prediction: Pneumonia
-
-Predicted probability: 0.84
-Uncertainty: Elevated
-Reliability status: Review recommended
-
-Model version: ...
-Experiment configuration: ...
-```
-
-The exact presentation will be determined later and should reflect the evidence produced by the research.
-
-**Current status: Future Engineering**
+The interface should expose uncertainty rather than hiding it.
 
 ---
 
-## 16. Layer 11 — Monitoring and Audit
+# 17. Audit and Monitoring
 
-Trustworthiness does not end when a prediction is generated.
+Trustworthy systems require traceability.
 
-A mature research system should eventually support auditability.
+The target research architecture therefore includes an audit path.
 
-Potential monitoring signals may include:
+```mermaid
+flowchart LR
+
+    INPUT["Input"] --> MODEL["Model"]
+    MODEL --> OUTPUT["Output"]
+    OUTPUT --> TRUST["Trustworthiness Evaluation"]
+
+    INPUT --> LOG["Audit Record"]
+    OUTPUT --> LOG
+    TRUST --> LOG
+
+    LOG --> ANALYSIS["Research Analysis / Monitoring"]
+```
+
+Potential recorded information may include:
 
 - model version;
-- input characteristics;
-- prediction distributions;
-- confidence distributions;
-- uncertainty distributions;
-- referral frequency;
-- potential shift indicators;
-- latency;
-- system errors; and
-- experimental configuration.
+- experiment version;
+- input condition;
+- predicted output;
+- confidence;
+- uncertainty;
+- shift condition;
+- referral decision; and
+- evaluation metadata.
 
-The purpose is to make model behaviour traceable and support future analysis.
-
-Privacy-sensitive healthcare information should not be logged indiscriminately.
-
-Monitoring design must consider data minimisation, privacy, security, and governance requirements.
-
-**Current status: Future Engineering**
+No personally identifiable clinical information is required for the current benchmark experiments.
 
 ---
 
-## 17. Research-to-System Mapping
+# 18. Software Architecture Direction
 
-Each experiment contributes evidence toward one or more architectural components.
+As the research matures, notebook-based experiments should progressively become reusable components.
 
-| Experiment | Research Question | Architectural Contribution | Status |
-|---|---|---|---|
-| EXP-001 | Can the baseline model make useful predictions? | Prediction engine | Complete |
-| EXP-002 | Are its probabilities reliable? | Calibration evaluation | Complete |
-| EXP-003 | Can uncertainty identify unreliable predictions? | Uncertainty engine | Planned |
-| EXP-004 | Can uncertain cases be handled selectively? | Risk/referral layer | Planned |
-| EXP-005 | What happens when the data distribution changes? | Shift-awareness evaluation | Planned |
-| EXP-006 | How stable is the model under controlled perturbation? | Robustness layer | Planned |
-| Future | Can multiple clinical modalities be combined reliably? | Multimodal engine | Research direction |
-| Future | Can generative outputs be evaluated for trustworthiness? | Generative AI layer | Research direction |
-| Integration | Can validated components operate together? | Integrated research prototype | Research direction |
+Target progression:
 
-This table provides the connection between the scientific programme and the engineering roadmap.
+```mermaid
+flowchart LR
 
----
-
-## 18. Proposed Code Architecture
-
-As reusable components emerge from the experiments, the source tree may evolve toward:
-
-```text
-src/
-├── data/
-│
-├── models/
-│
-├── calibration/
-│
-├── uncertainty/
-│
-├── robustness/
-│
-├── shift/
-│
-├── evaluation/
-│
-├── inference/
-│
-├── api/
-│
-├── monitoring/
-│
-└── utils/
+    NB["Research Notebook"] --> VALID["Validated Experiment"]
+    VALID --> MODULE["Reusable Python Module"]
+    MODULE --> TEST["Automated Tests"]
+    TEST --> PIPE["Integrated Pipeline"]
+    PIPE --> API["Research API"]
+    API --> UI["Research Interface"]
 ```
 
-This represents a target structure.
-
-Directories should be introduced when the corresponding functionality exists rather than creating empty architecture solely for appearance.
+This prevents premature engineering while ensuring successful research components can later become part of a complete system.
 
 ---
 
-## 19. Experiment Artifact Flow
+# 19. Repository-to-System Mapping
 
-Every major experiment should ideally produce traceable artifacts.
+The repository structure reflects this progression.
 
 ```text
-Research Question
-       │
-       ▼
-Experimental Configuration
-       │
-       ▼
-Implementation / Notebook
-       │
-       ▼
-Model Artifact
-       │
-       ▼
-Metrics + Figures
-       │
-       ▼
-Interpretation
-       │
-       ▼
-Experiment Documentation
-       │
-       ▼
-Architecture Decision
+trustworthy-healthcare-ai/
+│
+├── notebooks/
+│   └── exploratory and controlled research experiments
+│
+├── src/
+│   ├── data/
+│   │   └── reusable data-processing components
+│   │
+│   ├── models/
+│   │   └── predictive and future multimodal models
+│   │
+│   ├── evaluation/
+│   │   └── metrics and evaluation utilities
+│   │
+│   └── uncertainty/
+│       └── uncertainty-estimation components
+│
+├── experiments/
+│   └── experiment configurations and supporting assets
+│
+├── results/
+│   ├── figures/
+│   ├── tables/
+│   └── models/
+│
+├── docs/
+│   └── research methodology, evidence, architecture, and reports
+│
+└── tests/
+    └── reusable component verification
 ```
 
-Where appropriate, artifacts may include:
+The structure may evolve as the research system grows.
 
-- notebook;
-- reusable source code;
-- configuration;
-- model checkpoint;
-- CSV metrics;
+---
+
+# 20. Research and Engineering Boundary
+
+A central design principle is maintaining a clear boundary between experimental evidence and engineering claims.
+
+```mermaid
+flowchart LR
+
+    IDEA["Research Idea"] --> EXP["Experiment"]
+    EXP --> RESULT["Result"]
+
+    RESULT --> DEC{"Evidence<br/>Supports Use?"}
+
+    DEC -->|"Yes"| COMPONENT["Reusable Component"]
+    DEC -->|"No / Unclear"| RESEARCH["Further Research"]
+
+    COMPONENT --> SYSTEM["Integrated System"]
+    RESEARCH --> EXP
+```
+
+A negative result remains scientifically useful.
+
+It should not be hidden simply because it prevents a planned component from being integrated.
+
+---
+
+# 21. Reproducibility Architecture
+
+System development must preserve the relationship between code and evidence.
+
+```mermaid
+flowchart LR
+
+    RQ["Research Question"] --> CODE["Code"]
+    CODE --> ENV["Environment"]
+    ENV --> DATA["Dataset"]
+    DATA --> MODEL["Model"]
+    MODEL --> EVAL["Evaluation"]
+    EVAL --> ART["Artifacts"]
+    ART --> DOC["Interpretation"]
+```
+
+Relevant repository mechanisms include:
+
+- `pyproject.toml`;
+- `uv.lock`;
+- `.python-version`;
+- fixed dataset splits;
+- experiment-specific notebooks;
+- saved model checkpoints;
+- results tables;
 - figures;
-- experiment report; and
-- research-log entry.
-
-This provides traceability from scientific question to system decision.
+- experiment reports; and
+- Git commit history.
 
 ---
 
-## 20. Reproducibility Architecture
+# 22. Testing Strategy
 
-Reproducibility is treated as part of the system rather than an afterthought.
+As experimental code becomes reusable system code, testing becomes increasingly important.
 
-The project currently uses:
+The future testing hierarchy is:
 
-- Python 3.11;
-- `uv` dependency management;
-- version-controlled source code;
-- documented random seeds;
-- explicit dataset splits;
-- saved result tables;
-- saved model artifacts where appropriate; and
-- Git-based research history.
+```mermaid
+flowchart TD
 
-As the project matures, reproducibility should include explicit experiment configuration and increasingly reusable execution paths outside notebooks.
+    UNIT["Unit Tests"]
+    INT["Integration Tests"]
+    MODEL["Model Behaviour Tests"]
+    DATA["Data Validation"]
+    REPRO["Reproducibility Checks"]
 
----
+    UNIT --> QUALITY["Research Software Quality"]
+    INT --> QUALITY
+    MODEL --> QUALITY
+    DATA --> QUALITY
+    REPRO --> QUALITY
+```
 
-## 21. Research and Engineering Boundaries
-
-The project deliberately separates three concepts.
-
-### Research Prototype
-
-Used to test scientific hypotheses and investigate model behaviour.
-
-### Engineering Prototype
-
-Used to demonstrate how experimentally supported components can operate together as a system.
-
-### Clinical System
-
-A system intended for actual clinical use would require substantially more evidence and governance, potentially including external validation, clinical evaluation, security controls, regulatory consideration, human-factors evaluation, data governance, and deployment-specific monitoring.
-
-This repository currently targets the first two categories.
-
-It does **not** claim to provide a clinically deployable medical system.
+Testing requirements will grow alongside system complexity.
 
 ---
 
-## 22. Privacy and Security Direction
+# 23. Security and Privacy Boundary
 
-As the project progresses toward richer healthcare data and system integration, privacy and security become increasingly important.
+The current experiments use benchmark research datasets.
 
-Future architecture should consider:
+Future multimodal healthcare research would require stronger controls if real clinical information were ever introduced.
+
+Potential considerations include:
 
 - data minimisation;
-- de-identification where applicable;
 - access control;
-- secure secret management;
-- input validation;
-- dependency security;
-- audit logging;
-- model and dataset provenance;
-- privacy-preserving learning where scientifically relevant; and
-- protection against inappropriate disclosure of healthcare information.
+- de-identification;
+- secure storage;
+- auditability;
+- model privacy;
+- data provenance; and
+- appropriate governance.
 
-Security features should be implemented when required by the system stage rather than merely listed as completed capabilities.
-
----
-
-## 23. Testing Strategy
-
-As functionality moves from notebooks into reusable modules, the project should progressively introduce:
-
-### Unit Tests
-
-For individual functions and components.
-
-### Integration Tests
-
-For interactions between:
-
-- preprocessing;
-- model inference;
-- calibration;
-- uncertainty;
-- risk assessment; and
-- API components.
-
-### Research Validation Tests
-
-Where practical, tests may verify:
-
-- expected tensor dimensions;
-- deterministic behaviour under controlled seeds;
-- valid probability ranges;
-- correct dataset separation;
-- checkpoint loading; and
-- metric calculations.
-
-### System Tests
-
-Later stages may test complete inference flows from input through trustworthiness assessment to structured output.
+These controls are architectural considerations rather than claims about the current benchmark implementation.
 
 ---
 
-## 24. Observability Direction
+# 24. Complete Target Research System
 
-For the eventual research system, observability should distinguish between software health and model behaviour.
+The eventual research prototype can be summarised as:
 
-### Software Observability
+```mermaid
+flowchart TD
 
-Potential signals include:
+    CASE["Healthcare Research Case"]
 
-- request failures;
-- inference latency;
-- service availability; and
-- exceptions.
+    CASE --> IMG["Medical Image"]
+    CASE --> TXT["Clinical Text"]
+    CASE --> TAB["Structured Clinical Data"]
 
-### Model Observability
+    IMG --> IE["Image Encoder"]
+    TXT --> TE["Text Encoder"]
+    TAB --> TBE["Tabular Encoder"]
 
-Potential signals include:
+    IE --> FUSION["Multimodal Fusion"]
+    TE --> FUSION
+    TBE --> FUSION
 
-- prediction distributions;
-- confidence distributions;
-- uncertainty distributions;
-- referral rates;
-- potential data drift;
-- model version; and
-- performance where ground truth becomes available.
+    FUSION --> AI["Multimodal / Generative AI"]
 
-This distinction will become increasingly important as the project transitions from experiments to an integrated prototype.
+    AI --> OUT["Prediction / Generated Output"]
+
+    OUT --> TRUST["Trustworthiness Layer"]
+
+    TRUST --> CAL["Calibration"]
+    TRUST --> UQ["Uncertainty"]
+    TRUST --> SHIFT["Shift"]
+    TRUST --> ROB["Robustness"]
+    TRUST --> CONS["Consistency"]
+
+    CAL --> RISK["Risk Assessment"]
+    UQ --> RISK
+    SHIFT --> RISK
+    ROB --> RISK
+    CONS --> RISK
+
+    RISK --> DEC{"Reliability<br/>Assessment"}
+
+    DEC -->|"Lower Risk"| PRESENT["Research Output"]
+    DEC -->|"Higher Risk"| REFER["Flag for Review"]
+
+    REFER --> HUMAN["Human Review"]
+
+    PRESENT --> UI["Research Interface"]
+    HUMAN --> UI
+
+    UI --> AUDIT["Audit / Monitoring"]
+```
+
+This represents the intended integration of the research programme.
+
+It is not a claim that all components currently exist.
 
 ---
 
-## 25. Architecture Evolution
+# 25. Current Position
 
-The architecture is expected to evolve through approximately four stages.
+The architecture currently stands here:
 
-### Stage 1 — Experimental Foundation
+```mermaid
+flowchart LR
 
-**Current stage**
+    E1["EXP-001<br/>Prediction<br/>✅"] --> E2["EXP-002<br/>Calibration<br/>✅"]
 
-Focus:
+    E2 --> E3["EXP-003<br/>Uncertainty<br/>🔬"]
 
-- baseline medical imaging;
-- calibration;
-- reproducibility;
-- experimental documentation.
+    E3 --> E4["EXP-004<br/>Selective Prediction"]
+    E4 --> E5["EXP-005<br/>Distribution Shift"]
+    E5 --> E6["EXP-006<br/>Robustness"]
 
-### Stage 2 — Trustworthiness Engine
+    E6 --> MM["Multimodal AI"]
+    MM --> GEN["Generative / VLM"]
+    GEN --> SYS["Integrated Prototype"]
+```
 
-Focus:
+The immediate architectural priority is therefore not to build the entire interface.
+
+It is to determine whether an **uncertainty engine deserves to become part of the system**.
+
+That requires EXP-003.
+
+---
+
+# 26. Architectural Principle
+
+The project follows one overarching rule:
+
+> **Do not integrate a research capability merely because it is technically possible. Integrate it when experimental evidence demonstrates what it contributes, where it fails, and how it should be interpreted.**
+
+This allows the final system architecture to become a record of the research evidence rather than simply a software design diagram.
+
+---
+
+## Current Architecture Status
+
+**Implemented**
+
+- medical-image benchmark pipeline;
+- baseline CNN;
+- predictive evaluation;
+- calibration evaluation; and
+- temperature-scaling experiment.
+
+**Next**
 
 - uncertainty quantification;
+- prediction-error detection; and
+- uncertainty analysis.
+
+**Planned**
+
 - selective prediction;
-- distribution shift;
-- robustness.
-
-Expected outcome:
-
-A reusable trustworthiness layer supported by experimental evidence.
-
-### Stage 3 — Multimodal Research System
-
-Focus:
-
-- image + structured clinical information;
-- potentially clinical text;
-- multimodal uncertainty;
-- cross-modal reliability.
-
-Expected outcome:
-
-A research system capable of studying trustworthiness across multiple modalities.
-
-### Stage 4 — Trustworthy Generative AI Prototype
-
-Focus:
-
-- vision-language or generative models;
-- uncertainty-aware output;
-- grounding;
-- robustness;
-- risk-aware response;
-- API/interface integration;
-- monitoring and audit.
-
-Expected outcome:
-
-An integrated research prototype for investigating trustworthy multimodal and generative healthcare AI.
+- distribution-shift evaluation;
+- robustness evaluation;
+- multimodal modelling;
+- trustworthy generative / vision-language AI; and
+- integrated research prototype.
 
 ---
 
-## 26. Target End-State
-
-The intended end-state is not simply:
-
-```text
-Input
-  ↓
-Model
-  ↓
-Prediction
-```
-
-The project aims toward:
-
-```text
-Healthcare Input
-       ↓
-Data Processing
-       ↓
-Predictive / Generative Model
-       ↓
-Trustworthiness Assessment
-       ↓
-Calibration + Uncertainty + Robustness + Shift Evidence
-       ↓
-Risk-Aware Decision
-       ↓
-Output OR Flag for Review
-       ↓
-Research Interface / API
-       ↓
-Monitoring + Audit
-```
-
-This architecture reflects the central principle of the project:
-
-> **A trustworthy AI system should provide evidence not only about what it predicts, but also about when that prediction may be unreliable.**
-
----
-
-## 27. Current Architecture Status
-
-At the time of this architecture definition:
-
-| Component | Status |
-|---|---|
-| Medical image baseline | Experimentally evaluated |
-| Prediction pipeline | Implemented experimentally |
-| Calibration evaluation | Experimentally evaluated |
-| Temperature scaling | Experimentally evaluated; negligible improvement in current setting |
-| Uncertainty quantification | Planned |
-| Selective prediction | Planned |
-| Distribution-shift evaluation | Planned |
-| Robustness evaluation | Planned |
-| Risk-assessment engine | Future research |
-| Multimodal modelling | Future research |
-| Generative / vision-language modelling | Future research |
-| API layer | Future engineering |
-| Research interface | Future engineering |
-| Monitoring / audit | Future engineering |
-
-This table should be updated as the research programme progresses.
-
----
-
-## 28. Architecture Principle
-
-The architecture is intentionally ambitious, but implementation remains evidence-driven.
-
-The system will not become trustworthy merely because calibration, uncertainty, robustness, or multimodal components are added to a diagram.
-
-Each component must be investigated experimentally.
-
-The architecture therefore follows one governing principle:
-
-> **Research evidence determines system design — not the other way around.**
+**Last architectural milestone:** EXP-002 — Probability Calibration  
+**Current research milestone:** EXP-003 — Uncertainty Quantification and Error Detection
