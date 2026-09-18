@@ -343,12 +343,12 @@ Detailed reproducibility instructions will be maintained in:
 
 ## Documentation
 
-The repository documentation is organised so that the research programme can be followed from the high-level research question through methodology, experiments, evidence, and publication planning.
+The research documentation is organised so that the project can be followed from the central research problem through methodology, experimentation, evaluation, reproducibility, and publication planning.
 
 ### Research Framework
 
 - [Research Plan](docs/RESEARCH_PLAN.md) — research problem, aims, questions, objectives, scope, and roadmap.
-- [System Architecture](docs/SYSTEM_ARCHITECTURE.md) — progression from experimental evidence to an integrated trustworthy AI research prototype.
+- [System Architecture](docs/SYSTEM_ARCHITECTURE.md) — progression from experimental evidence toward an integrated trustworthy AI research prototype.
 - [Methodology](docs/METHODOLOGY.md) — datasets, experimental design, modelling procedures, controls, and research methodology.
 - [Experiment Registry](docs/EXPERIMENTS.md) — master registry of planned, active, and completed experiments.
 - [Evaluation Framework](docs/EVALUATION.md) — evaluation dimensions, metrics, interpretation, and limitations.
@@ -365,6 +365,8 @@ The repository documentation is organised so that the research programme can be 
 - [Research Log](docs/research_log.md) — chronological record of experimental progress, findings, limitations, and research decisions.
 
 Future experiment reports will be added only after the corresponding experiments have been completed.
+
+---
 
 ---
 
