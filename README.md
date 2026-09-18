@@ -161,19 +161,25 @@ Results will be added only after the experiment has been completed.
 
 ## Research Roadmap
 
-| Phase       | Research Investigation                | Status             |
-| ----------- | ------------------------------------- | ------------------ |
-| EXP-001     | Baseline medical image classification | ✅ Complete         |
-| EXP-002     | Probability calibration               | ✅ Complete         |
-| EXP-003     | Uncertainty quantification            | ⏳ Planned          |
-| EXP-004     | Selective prediction and referral     | ⏳ Planned          |
-| EXP-005     | Distribution-shift evaluation         | ⏳ Planned          |
-| EXP-006     | Robustness analysis                   | ⏳ Planned          |
-| Future      | Multimodal healthcare AI              | Research direction |
-| Future      | Trustworthy generative healthcare AI  | Research direction |
-| Integration | Trustworthy healthcare AI prototype   | Research direction |
+The project follows an evidence-driven experimental progression. Each stage is designed to answer a specific research question and, where supported by evidence, contribute a capability to the broader trustworthy healthcare AI research system.
 
-The roadmap is intentionally adaptive. Later experiments may change according to evidence produced by earlier stages.
+| Experiment | Research Focus | Status |
+|---|---|---|
+| EXP-001 | Baseline Medical Image Classification | ✅ Complete |
+| EXP-002 | Probability Calibration | ✅ Complete |
+| EXP-003 | Uncertainty Quantification and Error Detection | 🔬 Next |
+| EXP-004 | Selective Prediction and Uncertainty-Based Referral | 📋 Planned |
+| EXP-005 | Distribution Shift Evaluation | 📋 Planned |
+| EXP-006 | Robustness Evaluation | 📋 Planned |
+| Future | Multimodal Healthcare AI | 🔭 Future |
+| Future | Trustworthy Generative / Vision-Language AI | 🔭 Future |
+| Future | Integrated Trustworthy AI Research Prototype | 🔭 Future |
+
+The progression is intentionally cumulative:
+
+Baseline Prediction → Calibration → Uncertainty → Selective Prediction → Distribution Shift → Robustness → Multimodal AI → Trustworthy Generative AI → Integrated Research Prototype
+
+Later stages may be refined as experimental findings emerge.
 
 ---
 
