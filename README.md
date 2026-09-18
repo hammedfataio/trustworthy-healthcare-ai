@@ -343,16 +343,28 @@ Detailed reproducibility instructions will be maintained in:
 
 ## Documentation
 
-Detailed documentation is organised by purpose:
+The repository documentation is organised so that the research programme can be followed from the high-level research question through methodology, experiments, evidence, and publication planning.
 
-* **RESEARCH_PLAN.md** — research problem, aims, questions, objectives, scope, and roadmap.
-* **SYSTEM_ARCHITECTURE.md** — evolution from experimental components to the integrated research system.
-* **METHODOLOGY.md** — datasets, experimental design, modelling procedures, and controls.
-* **EXPERIMENTS.md** — registry of planned, active, and completed experiments.
-* **EVALUATION.md** — evaluation framework and metric rationale.
-* **REPRODUCIBILITY.md** — environment and experiment reproduction instructions.
-* **RESEARCH_LOG.md** — chronological research decisions, findings, limitations, and next questions.
-* **PUBLICATION_PLAN.md** — pathway from experimental evidence to potential research publication.
+### Research Framework
+
+- [Research Plan](docs/RESEARCH_PLAN.md) — research problem, aims, questions, objectives, scope, and roadmap.
+- [System Architecture](docs/SYSTEM_ARCHITECTURE.md) — progression from experimental evidence to an integrated trustworthy AI research prototype.
+- [Methodology](docs/METHODOLOGY.md) — datasets, experimental design, modelling procedures, controls, and research methodology.
+- [Experiment Registry](docs/EXPERIMENTS.md) — master registry of planned, active, and completed experiments.
+- [Evaluation Framework](docs/EVALUATION.md) — evaluation dimensions, metrics, interpretation, and limitations.
+- [Reproducibility Framework](docs/REPRODUCIBILITY.md) — environment, experiment traceability, artifacts, and reproduction standards.
+- [Publication Plan](docs/PUBLICATION_PLAN.md) — pathway from experimental evidence to a potential research manuscript.
+
+### Experimental Evidence
+
+- [EXP-001 — Baseline Medical Image Classification](docs/experiment_001_baseline.md)
+- [EXP-002 — Probability Calibration](docs/experiment_002_calibration.md)
+
+### Research Progress
+
+- [Research Log](docs/research_log.md) — chronological record of experimental progress, findings, limitations, and research decisions.
+
+Future experiment reports will be added only after the corresponding experiments have been completed.
 
 ---
 
