@@ -11,33 +11,27 @@
 
 ## 1. Experiment Overview
 
-EXP-002 investigates whether the probability estimates produced by the baseline medical-image classifier can be interpreted as reliable measures of predictive confidence.
+EXP-002 investigates the probability reliability of the baseline medical-image classifier developed in EXP-001.
 
-EXP-001 demonstrated that the baseline CNN achieved strong aggregate classification performance on PneumoniaMNIST. However, error analysis also revealed an important trustworthiness problem: the model could make an incorrect prediction while assigning extremely high probability to that prediction.
+EXP-001 demonstrated strong aggregate predictive performance on the PneumoniaMNIST benchmark. However, error analysis revealed an important trustworthiness concern: the model could make an incorrect prediction while assigning extremely high probability to that prediction.
 
-This observation motivated a transition from evaluating only:
+This motivated a transition from asking only:
 
-```text
-Is the prediction correct?
-```
+> **Is the predicted class correct?**
 
-to investigating:
+to also asking:
 
-```text
-Does the reported probability accurately represent confidence?
-```
+> **Do the model's probability estimates provide reliable information about predictive confidence?**
 
-EXP-002 therefore focuses on **probability calibration**.
-
-The experiment evaluates the baseline model's probability behaviour and investigates whether post-hoc temperature scaling improves probability calibration without retraining the classifier.
+EXP-002 therefore evaluates probability calibration and investigates whether post-hoc temperature scaling can improve the probabilistic behaviour of the existing classifier without retraining it.
 
 ---
 
 ## 2. Research Motivation
 
-High predictive accuracy alone is insufficient for trustworthy healthcare AI.
+Predictive accuracy alone is not sufficient for trustworthy healthcare AI.
 
-Consider two predictions:
+Consider two model outputs:
 
 ```text
 Prediction A
@@ -47,27 +41,29 @@ Prediction B
 P(pneumonia) = 0.99
 ```
 
-Both may produce the same binary class prediction at a threshold of 0.5.
+At a decision threshold of 0.5, both predictions may produce the same class label.
 
-However, their probability values communicate very different levels of confidence.
+However, the probability values communicate very different levels of model confidence.
 
-For probability estimates to be useful in reliability-sensitive systems, confidence should meaningfully correspond to empirical correctness.
+For probability estimates to be useful in reliability-sensitive systems, reported confidence should meaningfully correspond to observed correctness.
 
-A model that frequently produces extremely confident incorrect predictions may create risk even when its overall classification metrics appear strong.
+A model that produces highly confident incorrect predictions may therefore present reliability concerns even when its aggregate discrimination metrics are strong.
 
 ---
 
 ## 3. Research Question
 
+The primary research question for EXP-002 is:
+
 > **How well calibrated are the probability estimates produced by the baseline CNN for pneumonia classification, and does the model exhibit overconfidence when making incorrect predictions?**
 
 A secondary methodological question is:
 
-> **Can post-hoc temperature scaling improve the probability calibration of the existing model without changing the underlying classifier?**
+> **Can post-hoc temperature scaling improve the probability calibration of the existing model without retraining the classifier?**
 
 ---
 
-## 4. Relationship to EXP-001
+## 4. Evidence From EXP-001
 
 EXP-001 established the predictive baseline.
 
@@ -82,17 +78,17 @@ The held-out test performance was:
 | Precision | 0.8533 |
 | F1-score | 0.914286 |
 
-These results demonstrated useful discrimination on the benchmark.
+These results demonstrated useful discrimination on the PneumoniaMNIST benchmark.
 
-However, EXP-001 also identified an incorrectly classified normal image receiving approximately:
+However, aggregate metrics did not fully describe prediction-level reliability.
+
+During error analysis, an incorrectly classified normal image received approximately:
 
 ```text
 P(pneumonia) ≈ 0.9998
 ```
 
-This represents a highly confident error.
-
-That observation provides the direct motivation for EXP-002.
+This highly confident error provided the direct motivation for investigating calibration.
 
 ---
 
@@ -103,12 +99,10 @@ flowchart LR
 
     DATA["PneumoniaMNIST"] --> CNN["EXP-001 Baseline CNN"]
 
-    CNN --> PERF["Strong Aggregate<br/>Predictive Performance"]
-
+    CNN --> PERF["Strong Aggregate<br/>Performance"]
     CNN --> ERROR["Highly Confident<br/>Incorrect Prediction"]
 
     PERF --> QUESTION["Can the reported<br/>probabilities be trusted?"]
-
     ERROR --> QUESTION
 
     QUESTION --> EXP2["EXP-002<br/>Probability Calibration"]
@@ -116,7 +110,7 @@ flowchart LR
     EXP2 --> NEXT["EXP-003<br/>Uncertainty Quantification"]
 ```
 
-The transition from EXP-001 to EXP-002 is therefore evidence-driven rather than arbitrary.
+EXP-002 therefore follows directly from evidence generated in EXP-001 rather than being an isolated experiment.
 
 ---
 
@@ -127,153 +121,144 @@ EXP-002 uses the same PneumoniaMNIST benchmark and predefined dataset splits use
 | Split | Samples | Purpose |
 |---|---:|---|
 | Training | 4,708 | Original model training |
-| Validation | 524 | Temperature fitting |
+| Validation | 524 | Calibration fitting |
 | Test | 624 | Held-out evaluation |
 | **Total** | **5,856** | |
 
-No resampling was introduced for the calibration experiment.
+The predefined split structure was preserved.
 
-The original dataset split structure was preserved.
+No resampling was introduced specifically for the calibration experiment.
 
 ---
 
-## 7. Model
+## 7. Existing Model
 
-EXP-002 reuses the trained CNN from EXP-001.
+EXP-002 reuses the trained CNN checkpoint from EXP-001.
+
+The purpose is to evaluate and recalibrate the probabilities produced by the existing classifier rather than train a new predictive model.
+
+```mermaid
+flowchart LR
+
+    IMG["Medical Image"] --> CNN["Frozen EXP-001 CNN"]
+
+    CNN --> LOGIT["Logit"]
+
+    LOGIT --> SIGMOID["Sigmoid"]
+
+    SIGMOID --> PROB["Predicted Probability"]
+
+    PROB --> CAL["Calibration Analysis"]
+```
+
+The underlying classifier weights remain unchanged during post-hoc temperature scaling.
+
+---
+
+## 8. Accuracy and Calibration Are Different Questions
+
+Accuracy answers:
+
+> **How often is the thresholded class prediction correct?**
+
+Calibration asks:
+
+> **How well do reported confidence levels correspond to observed correctness?**
+
+A model can therefore exhibit:
+
+```text
+Strong Classification Performance
+              +
+Imperfect Probability Reliability
+```
+
+The two properties should not be treated as interchangeable.
+
+---
+
+## 9. Discrimination and Calibration Are Also Different
+
+AUROC evaluates how effectively model scores rank positive cases above negative cases.
+
+Calibration evaluates the numerical reliability of the probability estimates themselves.
+
+Conceptually:
+
+```text
+Discrimination
+      ↓
+Can the model rank cases effectively?
+
+
+Calibration
+      ↓
+Can the probability values be interpreted reliably?
+```
+
+A calibration method is therefore not primarily intended to improve discrimination.
+
+---
+
+## 10. Calibration Evaluation Framework
+
+EXP-002 considers several complementary aspects of probability reliability:
+
+- reliability analysis;
+- Expected Calibration Error;
+- Brier score;
+- confidence behaviour;
+- high-confidence errors; and
+- post-hoc temperature scaling.
+
+No single metric is treated as a complete description of model reliability.
+
+---
+
+## 11. Reliability Analysis
+
+A reliability diagram compares predicted confidence with empirical correctness.
 
 Conceptually:
 
 ```mermaid
 flowchart LR
 
-    IMG["Chest X-ray Image"] --> CNN["Frozen EXP-001 CNN"]
+    P["Predicted Probabilities"] --> BIN["Group Predictions<br/>Into Confidence Bins"]
 
-    CNN --> LOGIT["Model Logit"]
+    BIN --> CONF["Average Confidence<br/>Per Bin"]
 
-    LOGIT --> SIG["Sigmoid"]
+    BIN --> ACC["Observed Accuracy<br/>Per Bin"]
 
-    SIG --> PROB["Pneumonia Probability"]
+    CONF --> COMP["Compare"]
+    ACC --> COMP
 
-    PROB --> CAL["Calibration Analysis"]
+    COMP --> REL["Reliability Behaviour"]
 ```
 
-The baseline model itself is not retrained as part of the initial calibration analysis.
-
-This is important because EXP-002 is designed to investigate the probability behaviour of the existing predictive model rather than introduce a new classifier.
-
----
-
-## 8. Why Calibration Is Different From Accuracy
-
-Accuracy answers:
-
-> How often is the predicted class correct?
-
-Calibration asks:
-
-> When the model reports a given confidence level, how well does that confidence correspond to observed correctness?
-
-A model can therefore have:
-
-```text
-High Accuracy
-     +
-Poor Calibration
-```
-
-or:
-
-```text
-Moderate Accuracy
-     +
-Reasonable Calibration
-```
-
-These are related but distinct properties.
-
----
-
-## 9. Why Calibration Is Different From Discrimination
-
-AUROC evaluates how effectively model scores rank positive examples above negative examples.
-
-Calibration evaluates the numerical reliability of the predicted probabilities.
-
-Consequently:
-
-```text
-Discrimination
-     ↓
-Can the model rank cases?
-
-Calibration
-     ↓
-Can the probability values themselves be interpreted reliably?
-```
-
-A calibration method should therefore not be expected to improve discrimination automatically.
-
----
-
-## 10. Calibration Evaluation Strategy
-
-EXP-002 investigates calibration using complementary approaches.
-
-The evaluation framework includes:
-
-- reliability analysis;
-- Expected Calibration Error (ECE);
-- Brier score;
-- confidence behaviour;
-- high-confidence errors; and
-- post-hoc temperature scaling.
-
-No single calibration metric is treated as sufficient by itself.
-
----
-
-## 11. Reliability Diagram
-
-A reliability diagram compares predicted confidence with empirical correctness.
-
-Conceptually:
-
-```text
-Predicted Confidence
-        ↓
-Group predictions into bins
-        ↓
-Observed Accuracy per bin
-        ↓
-Compare confidence with accuracy
-```
-
-A perfectly calibrated model would approximately follow:
-
-```text
-Confidence ≈ Empirical Accuracy
-```
+For a well-calibrated model, predicted confidence should approximately correspond to empirical accuracy.
 
 For example:
 
 ```text
-Predictions with confidence ≈ 0.80
-                ↓
-Should be correct approximately 80% of the time
+Predicted confidence ≈ 0.80
+              ↓
+Observed correctness ≈ 80%
 ```
 
-Systematic departures from this relationship indicate calibration error.
+Systematic differences between confidence and observed correctness indicate calibration error.
 
 ---
 
 ## 12. Expected Calibration Error
 
-Expected Calibration Error summarises differences between confidence and empirical accuracy across confidence bins.
+Expected Calibration Error (ECE) summarises differences between confidence and empirical accuracy across confidence bins.
 
-Conceptually:
+A common formulation is:
 
 \[
-ECE = \sum_{m=1}^{M}
+ECE =
+\sum_{m=1}^{M}
 \frac{|B_m|}{n}
 \left|
 acc(B_m)-conf(B_m)
@@ -282,42 +267,45 @@ acc(B_m)-conf(B_m)
 
 where:
 
-- \(B_m\) is calibration bin \(m\);
-- \(acc(B_m)\) is empirical accuracy in that bin;
-- \(conf(B_m)\) is average confidence in that bin; and
-- \(n\) is the total number of predictions.
+- \(B_m\) represents calibration bin \(m\);
+- \(acc(B_m)\) is empirical accuracy within that bin;
+- \(conf(B_m)\) is average confidence within that bin; and
+- \(n\) is the number of evaluated predictions.
 
-Lower ECE generally indicates closer agreement between confidence and observed correctness under the chosen binning scheme.
+Lower ECE generally indicates closer agreement between confidence and observed correctness under the selected binning procedure.
 
-However, ECE depends on binning choices and should not be interpreted as a complete description of calibration.
+However, ECE depends on binning choices and should not be interpreted in isolation.
 
 ---
 
 ## 13. Brier Score
 
-The Brier score evaluates squared error between predicted probabilities and observed binary outcomes.
+The Brier score measures squared error between predicted probabilities and observed binary outcomes.
 
 For binary classification:
 
 \[
-BS = \frac{1}{N}\sum_{i=1}^{N}(p_i-y_i)^2
+BS =
+\frac{1}{N}
+\sum_{i=1}^{N}
+(p_i-y_i)^2
 \]
 
 where:
 
 - \(p_i\) is the predicted probability;
 - \(y_i\) is the observed binary outcome; and
-- \(N\) is the number of observations.
+- \(N\) is the number of evaluated observations.
+
+Unlike classification accuracy, the Brier score evaluates the quality of the probability estimates themselves.
 
 Lower values indicate smaller probability error.
-
-Unlike accuracy, the Brier score evaluates the quality of probability estimates rather than only thresholded class predictions.
 
 ---
 
 ## 14. High-Confidence Error Analysis
 
-EXP-002 also examines predictions that are:
+EXP-002 also considers predictions that are simultaneously:
 
 ```text
 Incorrect
@@ -331,18 +319,18 @@ For binary prediction, confidence can be represented as:
 confidence = \max(p,1-p)
 \]
 
-A high-confidence error therefore represents a case where the model is not merely wrong but strongly committed to the incorrect prediction.
+A high-confidence error is therefore a prediction where the model is not only wrong but strongly committed to the incorrect class.
 
-This is especially relevant to trustworthy AI because confidence may influence downstream reliance on model outputs.
+This is particularly important in trustworthy AI because downstream users or systems may interpret highly confident predictions as more reliable.
 
 ---
 
-## 15. Calibration Analysis Flow
+## 15. Calibration Experiment Flow
 
 ```mermaid
 flowchart TD
 
-    MODEL["Frozen EXP-001 Model"] --> LOGITS["Generate Logits"]
+    CKPT["EXP-001 Model Checkpoint"] --> LOGITS["Generate Model Logits"]
 
     LOGITS --> PROBS["Convert to Probabilities"]
 
@@ -351,18 +339,16 @@ flowchart TD
     PROBS --> BRIER["Brier Score"]
     PROBS --> ERR["High-Confidence Error Analysis"]
 
-    REL --> BASE["Baseline Calibration Evidence"]
-    ECE --> BASE
-    BRIER --> BASE
-    ERR --> BASE
+    LOGITS --> TEMP["Fit Temperature<br/>on Validation Data"]
 
-    LOGITS --> TEMP["Temperature Scaling"]
+    TEMP --> RECAL["Temperature-Scaled<br/>Probabilities"]
 
-    TEMP --> RECAL["Recalibrated Probabilities"]
+    RECAL --> COMP["Evaluate Calibration Behaviour"]
 
-    RECAL --> COMP["Compare Calibration Behaviour"]
-
-    BASE --> INTERP["Scientific Interpretation"]
+    REL --> INTERP["Scientific Interpretation"]
+    ECE --> INTERP
+    BRIER --> INTERP
+    ERR --> INTERP
     COMP --> INTERP
 ```
 
@@ -372,10 +358,11 @@ flowchart TD
 
 Temperature scaling is a post-hoc calibration technique.
 
-Given a model logit \(z\), the calibrated probability is obtained from:
+Given a model logit \(z\), a temperature-scaled probability is:
 
 \[
-p = \sigma\left(\frac{z}{T}\right)
+p =
+\sigma\left(\frac{z}{T}\right)
 \]
 
 where:
@@ -384,7 +371,7 @@ where:
 - \(T\) is a learned positive scalar temperature; and
 - \(\sigma\) is the sigmoid function.
 
-The model weights remain unchanged.
+The model parameters themselves are not retrained.
 
 Only the scale of the logits is adjusted.
 
@@ -399,48 +386,50 @@ T > 1
     ↓
 Logits become less extreme
     ↓
-Probabilities generally become softer
+Probabilities become softer
 
 
 T < 1
     ↓
 Logits become more extreme
     ↓
-Probabilities generally become sharper
+Probabilities become sharper
 
 
 T ≈ 1
     ↓
-Very little change to original logits
+Very little global adjustment
 ```
 
-The fitted temperature therefore provides useful information about the magnitude of the global calibration adjustment identified on validation data.
+A fitted temperature close to 1 therefore indicates that the optimisation procedure identified only a small global rescaling of the original logits.
 
 ---
 
-## 18. Why Temperature Is Fitted on Validation Data
+## 18. Validation-Based Temperature Fitting
 
 Temperature is a learned calibration parameter.
 
-It must therefore not be fitted using the held-out test set.
+It must therefore be estimated without using the held-out test set for parameter fitting.
 
-The correct experimental structure is:
+The experimental structure is:
 
 ```mermaid
 flowchart LR
 
-    TRAIN["Training Set"] --> MODEL["Train CNN"]
+    TRAIN["Training Set"] --> MODEL["Train Baseline CNN"]
 
-    VAL["Validation Set"] --> FIT["Fit Temperature T"]
+    MODEL --> VALLOG["Validation Logits"]
 
-    MODEL --> FIT
+    VAL["Validation Set"] --> VALLOG
 
-    FIT --> FIX["Freeze T"]
+    VALLOG --> FIT["Fit Temperature"]
 
-    FIX --> TEST["Held-Out Test Evaluation"]
+    FIT --> FREEZE["Freeze T"]
+
+    FREEZE --> EVAL["Subsequent Evaluation"]
 ```
 
-This protects the test set from becoming part of the calibration-fitting procedure.
+This preserves the distinction between model/calibration development and held-out evaluation.
 
 ---
 
@@ -448,60 +437,52 @@ This protects the test set from becoming part of the calibration-fitting procedu
 
 Temperature must remain positive.
 
-The implementation therefore optimises a log-temperature parameter and transforms it back into temperature space.
-
-Conceptually:
+A suitable implementation can optimise a log-temperature parameter:
 
 \[
 T = \exp(\theta)
 \]
 
-This guarantees:
+which guarantees:
 
 \[
 T > 0
 \]
 
-during optimisation.
+throughout optimisation.
+
+This prevents invalid negative temperature values.
 
 ---
 
-## 20. Optimisation
+## 20. Calibration Optimisation Objective
 
 Temperature fitting uses validation negative log-likelihood as the optimisation objective.
 
-The purpose is to identify a scalar temperature that improves the probabilistic fit of the existing model outputs on validation data.
+The goal is to identify a scalar temperature that improves the probabilistic fit of the existing model outputs on validation data.
 
-The corrected optimisation procedure produced the final verified temperature:
+The corrected optimisation procedure produced:
 
 \[
 T = 1.007948
 \]
 
-This value is extremely close to 1.
+The fitted temperature is very close to 1.
 
 ---
 
-## 21. Verified Temperature-Fitting Result
+# 21. Final Verified Calibration Result
 
-The final verified validation result was:
+The final corrected and verified calibration-fitting evidence is:
 
-| Stage | Validation NLL |
+| Quantity | Result |
 |---|---:|
-| Before temperature scaling | 0.097432 |
-| After temperature scaling | 0.097427 |
+| Fitted temperature | **1.007948** |
+| Validation NLL before scaling | **0.097432** |
+| Validation NLL after scaling | **0.097427** |
+| Absolute NLL change | **-0.000005** |
 
-The absolute reduction was:
-
-\[
-0.097432 - 0.097427 = 0.000005
-\]
-
-Therefore, the observed improvement in validation negative log-likelihood was negligible.
-
----
-
-## 22. Result Visualisation
+The observed improvement in validation negative log-likelihood was therefore negligible.
 
 ```mermaid
 flowchart LR
@@ -512,10 +493,36 @@ flowchart LR
 
     TEMP --> AFTER["Validation NLL<br/>0.097427"]
 
-    AFTER --> RESULT["Negligible Improvement"]
+    AFTER --> RESULT["Negligible<br/>Improvement"]
 ```
 
-The result does not support a claim of substantial calibration improvement from global temperature scaling in this experimental setting.
+This is the principal corrected quantitative result retained from the temperature-fitting procedure.
+
+---
+
+## 22. Evidence-Provenance Note
+
+Earlier exploratory calibration work produced preliminary post-scaling test values.
+
+The temperature-optimisation procedure was subsequently corrected.
+
+For this reason, those earlier preliminary post-scaling test values are **not presented as final corrected experimental evidence in this report**.
+
+The final evidence currently treated as verified is:
+
+```text
+Temperature
+T = 1.007948
+
+Validation NLL
+Before = 0.097432
+After  = 0.097427
+Change = -0.000005
+```
+
+Exact corrected post-scaling test calibration metrics should be reported only after they are confirmed from the final corrected evaluation artifact.
+
+This distinction preserves experimental provenance and prevents preliminary outputs from being represented as final results.
 
 ---
 
@@ -527,13 +534,13 @@ The fitted temperature:
 T = 1.007948
 ```
 
-is very close to the identity transformation:
+is extremely close to the identity transformation:
 
 ```text
 T = 1
 ```
 
-Similarly, validation NLL changed only from:
+Similarly, validation negative log-likelihood changed only from:
 
 ```text
 0.097432
@@ -545,61 +552,40 @@ to:
 0.097427
 ```
 
-This indicates that global temperature scaling made only a very small adjustment to the model's logits under the evaluated validation conditions.
+The appropriate interpretation is therefore:
 
-The appropriate conclusion is therefore:
+> **Global temperature scaling produced negligible improvement in validation negative log-likelihood for this model under the evaluated experimental conditions.**
 
-> **Global temperature scaling produced negligible improvement in validation negative log-likelihood for this model and experimental setting.**
-
-This conclusion is deliberately narrow.
+The conclusion is intentionally limited to the evidence generated by this experiment.
 
 ---
 
-## 24. What This Result Does Not Mean
+## 24. What the Result Does Not Establish
 
-The experiment does **not** demonstrate that:
+EXP-002 does **not** establish that:
 
 - temperature scaling is generally ineffective;
-- temperature scaling does not work for medical AI;
-- the model is perfectly calibrated;
+- temperature scaling does not work in medical AI;
+- the baseline model is perfectly calibrated;
 - calibration is unnecessary;
-- high-confidence errors have been solved;
-- the model is clinically trustworthy; or
-- probability calibration and uncertainty quantification are equivalent.
+- high-confidence errors have been eliminated;
+- the model is clinically trustworthy;
+- uncertainty has been fully quantified; or
+- the result generalises to other datasets or healthcare environments.
 
-The result applies to the model, dataset and experimental procedure evaluated here.
-
----
-
-## 25. Important Evidence-Provenance Note
-
-An earlier preliminary temperature-scaling run produced additional before/after test-set values.
-
-However, the temperature-optimisation procedure was subsequently corrected.
-
-The final corrected temperature is:
-
-```text
-T = 1.007948
-```
-
-with verified validation NLL:
-
-```text
-0.097432 → 0.097427
-```
-
-Exact corrected post-scaling test calibration metrics are therefore **not reported here unless they are independently confirmed from the final corrected evaluation artifact**.
-
-This prevents preliminary results from being presented as final experimental evidence.
+The findings apply to the current model, dataset and experimental procedure.
 
 ---
 
-## 26. Why Class Predictions Are Not the Main Objective
+## 25. Why Temperature Scaling Does Not Target Accuracy
 
-Temperature scaling with positive \(T\) rescales logits but does not change their sign.
+For positive temperature \(T\):
 
-For binary classification at the standard 0.5 probability threshold:
+\[
+sign(z/T)=sign(z)
+\]
+
+For binary classification with a 0.5 decision threshold:
 
 ```text
 z > 0
@@ -611,51 +597,55 @@ z < 0
 p < 0.5
 ```
 
-and for positive temperature:
+Positive temperature scaling therefore preserves the sign of binary logits.
+
+Its primary purpose is probability calibration rather than changing thresholded class decisions.
+
+Consequently, classification accuracy improvement is not the principal objective of temperature scaling.
+
+---
+
+## 26. Why Temperature Scaling Does Not Target AUROC
+
+Positive temperature scaling is a monotonic transformation of the logits.
+
+It preserves their ordering.
+
+Because AUROC primarily evaluates ranking, substantial AUROC improvement is not the intended objective of temperature scaling.
+
+This reinforces the distinction between:
 
 ```text
-sign(z / T) = sign(z)
+Discrimination
+       and
+Calibration
 ```
 
-Therefore temperature scaling is intended primarily to alter probability calibration rather than thresholded class decisions.
-
-Its purpose is not to increase classification accuracy directly.
-
 ---
 
-## 27. Why AUROC Is Not the Main Objective
+## 27. Remaining Trustworthiness Question
 
-Positive temperature scaling is monotonic with respect to the original logits.
+EXP-002 addresses population-level probability reliability, but a different question remains:
 
-It therefore preserves score ordering.
+> **Can the model identify when an individual prediction may be unreliable?**
 
-Since AUROC depends on ranking rather than the absolute probability scale, substantial discrimination changes are not the expected objective of temperature scaling.
-
-The primary question is probability reliability.
-
----
-
-## 28. The Remaining Trustworthiness Problem
-
-Even after calibration analysis, an important problem remains:
+Consider:
 
 ```text
-Model produces probability
-          ↓
-Probability may appear decisive
-          ↓
-But is the model actually uncertain about the case?
+Model Prediction
+      ↓
+Very High Probability
+      ↓
+Low apparent ambiguity
+      ↓
+But prediction may still be wrong
 ```
 
-Calibration operates primarily at the level of population probability reliability.
-
-It does not automatically provide a complete prediction-level uncertainty estimate.
-
-This distinction motivates EXP-003.
+Calibration alone does not provide a complete answer to this prediction-level reliability problem.
 
 ---
 
-## 29. Calibration vs Uncertainty Quantification
+## 28. Calibration and Uncertainty Are Complementary
 
 ```mermaid
 flowchart TD
@@ -664,39 +654,122 @@ flowchart TD
 
     MODEL --> UQ["Uncertainty Quantification"]
 
-    CAL --> CQ["Do confidence levels correspond<br/>to empirical correctness?"]
+    CAL --> CQ["Do reported confidence levels<br/>correspond to observed correctness?"]
 
-    UQ --> UQ1["Can uncertainty identify<br/>potentially unreliable predictions?"]
+    UQ --> UQQ["Does uncertainty provide useful<br/>information about prediction failure?"]
 
     CQ --> TRUST["Trustworthiness Evidence"]
-    UQ1 --> TRUST
+    UQQ --> TRUST
 ```
 
-Calibration and uncertainty quantification are complementary rather than interchangeable.
+Calibration and uncertainty quantification therefore address related but distinct reliability questions.
 
 ---
 
-## 30. Why Predictive Entropy Comes Next
+## 29. Why EXP-003 Follows EXP-002
 
-EXP-003 begins by investigating deterministic predictive entropy.
+The research progression now becomes:
 
-For binary probability \(p\):
+```mermaid
+flowchart TD
+
+    E1["EXP-001<br/>Baseline Prediction"]
+
+    E1 --> STRONG["Strong Aggregate<br/>Predictive Performance"]
+
+    E1 --> ERROR["Highly Confident<br/>Incorrect Prediction"]
+
+    STRONG --> E2["EXP-002<br/>Probability Calibration"]
+    ERROR --> E2
+
+    E2 --> TEMP["Temperature Scaling<br/>T = 1.007948"]
+
+    TEMP --> NLL["Validation NLL<br/>0.097432 → 0.097427"]
+
+    NLL --> NEG["Negligible Improvement"]
+
+    NEG --> QUESTION["Can prediction-level uncertainty<br/>identify model failures?"]
+
+    QUESTION --> E3["EXP-003<br/>Uncertainty Quantification<br/>& Error Detection"]
+```
+
+EXP-003 is therefore motivated by an unresolved reliability question rather than by a predetermined desire to add another technique.
+
+---
+
+## 30. Next Research Question
+
+EXP-003 asks:
+
+> **Does predictive uncertainty provide useful information for distinguishing incorrect from correct predictions produced by the baseline medical-image classifier?**
+
+The initial uncertainty baseline will be deterministic binary predictive entropy.
+
+For predicted probability \(p\):
 
 \[
-H(p)=-p\log(p)-(1-p)\log(1-p)
+H(p)
+=
+-p\log(p)
+-
+(1-p)\log(1-p)
 \]
 
-The key research question will not simply be whether entropy can be calculated.
+The key question is not merely whether entropy can be calculated.
 
-Instead:
-
-> **Does greater estimated uncertainty correspond to greater likelihood of model error?**
-
-This directly extends the reliability question exposed by EXP-001 and EXP-002.
+The experiment will investigate whether higher uncertainty actually corresponds to increased likelihood of prediction error.
 
 ---
 
-## 31. Research Progression After EXP-002
+## 31. Why High-Confidence Errors Matter for EXP-003
+
+Predictive entropy is highest near:
+
+```text
+p = 0.5
+```
+
+and becomes small as:
+
+```text
+p → 0
+```
+
+or:
+
+```text
+p → 1
+```
+
+Therefore an incorrect prediction with:
+
+```text
+P(pneumonia) ≈ 0.9998
+```
+
+would be expected to have very low probability-derived predictive entropy.
+
+This creates an important research question:
+
+```mermaid
+flowchart LR
+
+    WRONG["Incorrect Prediction"]
+
+    WRONG --> CONF["Very High Confidence"]
+
+    CONF --> LOW["Low Predictive Entropy"]
+
+    LOW --> PROBLEM["Can deterministic entropy<br/>miss confident errors?"]
+
+    PROBLEM --> EXP3["EXP-003"]
+```
+
+If such behaviour is observed systematically, it would motivate investigation of richer uncertainty-estimation methods.
+
+---
+
+## 32. Broader Research Progression
 
 ```mermaid
 flowchart LR
@@ -716,13 +789,13 @@ flowchart LR
     E1 --> E2 --> E3 --> E4 --> E5 --> E6
 ```
 
-Each experiment addresses a distinct trustworthiness question.
+Each experiment addresses a distinct question about model trustworthiness.
 
 ---
 
-## 32. Capability Progression
+## 33. System Capability Progression
 
-From a system perspective:
+The experiments also contribute incrementally to the intended research system.
 
 ```text
 EXP-001
@@ -750,13 +823,13 @@ EXP-006
 Robustness Evaluation
 ```
 
-A component becomes part of the final research prototype only when supported by experimental evidence and clearly documented limitations.
+A component should become part of the integrated research prototype only when its behaviour has been evaluated and its limitations are understood.
 
 ---
 
-## 33. Reproducibility
+## 34. Reproducibility
 
-EXP-002 is tied to the same research environment used by the broader project.
+EXP-002 is tied to the project's reproducible research environment.
 
 Core environment:
 
@@ -772,151 +845,112 @@ matplotlib
 MedMNIST
 ```
 
-The calibration experiment should remain traceable to:
+The experiment should remain traceable to:
 
 - the EXP-001 model architecture;
 - the EXP-001 checkpoint;
 - PneumoniaMNIST;
-- predefined train/validation/test splits;
+- predefined dataset splits;
+- the probability-generation procedure;
 - the temperature-scaling implementation;
 - the validation fitting procedure;
-- the final fitted temperature; and
-- saved calibration artifacts.
+- the corrected fitted temperature; and
+- the corresponding Git history.
 
 ---
 
-## 34. Experiment Integrity
+## 35. Experiment Integrity Principles
 
-The following principles govern interpretation of EXP-002:
+The following principles govern EXP-002:
 
-1. Temperature fitting uses validation data rather than test data.
-2. The existing classifier is not retrained for post-hoc calibration.
-3. Preliminary results are not substituted for corrected final evidence.
-4. Negligible results are reported rather than hidden.
-5. Calibration is not equated with uncertainty quantification.
-6. Benchmark evidence is not presented as clinical validation.
-7. Conclusions remain limited to the evaluated experimental setting.
+1. The existing classifier is reused rather than silently replaced.
+2. Temperature is fitted using validation data.
+3. Held-out test data is not used to fit the calibration parameter.
+4. Preliminary results are distinguished from corrected verified evidence.
+5. Negligible results are reported rather than hidden.
+6. Calibration is not equated with complete uncertainty quantification.
+7. Benchmark results are not described as clinical validation.
+8. Conclusions remain limited to the evaluated experimental setting.
 
 ---
 
-## 35. Limitations
+## 36. Limitations
 
-EXP-002 has several important limitations.
+### Single benchmark dataset
 
-### Single dataset
+EXP-002 evaluates PneumoniaMNIST only.
 
-The experiment evaluates PneumoniaMNIST only.
+Calibration behaviour may differ across datasets, hospitals, devices and patient populations.
 
-Calibration behaviour may differ across datasets, institutions, populations and imaging conditions.
+### Single baseline architecture
 
-### Single model
+The findings concern the CNN used in EXP-001.
 
-The calibration result concerns the baseline CNN used in this project.
-
-Different architectures may exhibit different probability behaviour.
+Different model architectures may exhibit different probability behaviour.
 
 ### Global calibration method
 
-Temperature scaling learns a single scalar parameter.
+Temperature scaling learns one scalar temperature.
 
-This may be insufficient for more complex forms of calibration error.
+A single global transformation may not address more complex or subgroup-specific calibration behaviour.
 
-### Benchmark setting
+### Benchmark rather than deployment setting
 
-PneumoniaMNIST is useful for controlled research but does not reproduce the full complexity of clinical deployment.
+PneumoniaMNIST provides a controlled benchmark but does not reproduce the full complexity of real clinical deployment.
 
 ### No distribution-shift evaluation
 
-EXP-002 does not establish whether calibration remains stable when the data distribution changes.
+EXP-002 does not establish whether calibration remains stable when the input distribution changes.
 
-### No complete epistemic uncertainty estimate
+Distribution shift will be investigated separately.
 
-Probability calibration does not quantify all sources of model uncertainty.
+### Calibration is not complete uncertainty quantification
+
+Probability calibration does not quantify all sources of uncertainty, particularly epistemic uncertainty arising from limited model knowledge.
 
 ### No clinical validation
 
-The experiment does not demonstrate safety, diagnostic reliability or clinical readiness.
+The experiment does not establish diagnostic safety, regulatory compliance or clinical readiness.
 
 ---
 
-## 36. Main Finding
+## 37. Main Verified Finding
 
-The principal verified finding from EXP-002 is:
+The principal verified result of EXP-002 is:
 
-> **Validation-fitted global temperature scaling produced a temperature of 1.007948 and changed validation NLL only from 0.097432 to 0.097427, indicating negligible improvement under the evaluated conditions.**
+> **Validation-fitted global temperature scaling produced a temperature of 1.007948 and changed validation negative log-likelihood from 0.097432 to 0.097427, representing negligible improvement under the evaluated conditions.**
 
-This is a valid negative/negligible result.
+This is a scientifically valid negligible result.
 
-It provides evidence that simply applying a global probability rescaling is not sufficient to resolve the broader trustworthiness questions exposed by the baseline model.
+It does not need to be converted into a positive result to be useful.
+
+Instead, it helps determine what should be investigated next.
 
 ---
 
-## 37. Research Implication
+## 38. Research Implication
 
-The result shifts the next research question from:
+The evidence moves the project from:
 
 ```text
-Can we globally rescale model confidence?
+Can we improve confidence reliability
+through global probability rescaling?
 ```
 
 toward:
 
 ```text
-Can uncertainty estimates identify predictions
-that are more likely to be wrong?
+Can an uncertainty estimate provide
+useful information about model failure?
 ```
 
-This motivates EXP-003.
+That transition defines EXP-003.
 
 ---
 
-## 38. Connection to EXP-003
+## 39. Relationship to the Final Research System
 
-```mermaid
-flowchart TD
-
-    E1["EXP-001<br/>Strong prediction performance"]
-
-    E1 --> FAIL["Highly confident error observed"]
-
-    FAIL --> E2["EXP-002<br/>Calibration analysis"]
-
-    E2 --> TEMP["Temperature scaling<br/>T = 1.007948"]
-
-    TEMP --> SMALL["Negligible validation<br/>NLL improvement"]
-
-    SMALL --> QUESTION["Probability calibration alone does not<br/>answer prediction-level reliability"]
-
-    QUESTION --> E3["EXP-003<br/>Uncertainty Quantification<br/>& Error Detection"]
-```
-
-EXP-003 will investigate whether uncertainty estimates contain useful information about model failure.
-
----
-
-## 39. Experiment Artifacts
-
-Primary experimental implementation:
-
-```text
-notebooks/02_confidence_calibration.ipynb
-```
-
-Related baseline model:
-
-```text
-results/models/experiment_001_baseline_cnn.pt
-```
-
-Expected calibration artifacts include calibration tables and reliability visualisations.
-
-Only artifacts that are confirmed to exist in the repository should be treated as final saved evidence.
-
----
-
-## 40. Relationship to the Final System
-
-The long-term research system is intended to contain multiple trustworthiness mechanisms:
+The long-term research architecture contains several complementary trustworthiness mechanisms.
 
 ```mermaid
 flowchart LR
@@ -936,11 +970,34 @@ flowchart LR
     UQ --> RISK
     SHIFT --> RISK
     ROB --> RISK
+
+    RISK --> PRESENT["Present Output"]
+    RISK --> REVIEW["Flag for Review"]
 ```
 
-EXP-002 contributes evidence toward the **calibration component** of this architecture.
+EXP-002 contributes evidence toward the **calibration evaluation component**.
 
-It does not independently establish the reliability of the complete system.
+It does not independently validate the complete trustworthiness layer.
+
+---
+
+## 40. Experiment Artifacts
+
+Primary experimental notebook:
+
+```text
+notebooks/02_confidence_calibration.ipynb
+```
+
+Baseline model checkpoint:
+
+```text
+results/models/experiment_001_baseline_cnn.pt
+```
+
+Calibration-related tables and figures should only be listed as final artifacts after their presence and provenance have been verified in the repository.
+
+This report intentionally avoids claiming that an expected artifact exists unless it has been confirmed.
 
 ---
 
@@ -948,42 +1005,47 @@ It does not independently establish the reliability of the complete system.
 
 | Component | Status |
 |---|---|
-| Baseline model reused | Complete |
+| EXP-001 model reused | Complete |
 | Calibration analysis | Complete |
-| Temperature scaling | Complete |
-| Validation fitting | Complete |
+| Temperature scaling implementation | Complete |
+| Validation temperature fitting | Complete |
 | Corrected temperature verified | Complete |
 | Corrected validation NLL verified | Complete |
-| Broader uncertainty evaluation | Not part of EXP-002 |
-| Distribution-shift calibration | Future work |
+| Preliminary post-scaling test metrics treated as final | **No** |
+| Prediction-level uncertainty evaluation | EXP-003 |
+| Distribution-shift evaluation | Future experiment |
+| Robustness evaluation | Future experiment |
 | Clinical validation | Not performed |
 
 ---
 
 ## 42. Final Conclusion
 
-EXP-002 examined probability calibration as the second stage of the Trustworthy Healthcare AI research programme.
+EXP-002 investigated probability calibration as the second stage of the Trustworthy Healthcare AI research programme.
 
-The experiment was motivated by a key observation from EXP-001: strong aggregate classification performance can coexist with highly confident individual errors.
+The experiment was motivated by evidence from EXP-001 showing that strong aggregate classification performance can coexist with highly confident individual errors.
 
-Post-hoc temperature scaling was fitted using validation data while preserving the underlying classifier.
+The existing baseline CNN was retained, and post-hoc temperature scaling was investigated without retraining the classifier.
 
-The corrected procedure produced:
+The corrected calibration procedure produced:
 
 ```text
-Temperature: 1.007948
+Fitted temperature:
+T = 1.007948
 
 Validation NLL:
-0.097432 → 0.097427
+Before = 0.097432
+After  = 0.097427
+Change = -0.000005
 ```
 
-The improvement was negligible.
+The observed improvement was negligible.
 
-This result should not be interpreted as evidence that calibration is unimportant or that temperature scaling is generally ineffective.
+This result should not be interpreted as evidence that calibration is generally ineffective or that temperature scaling is unsuitable for healthcare AI.
 
-Instead, it demonstrates that **global temperature rescaling provided little additional benefit in this specific experimental setting**.
+Instead, the evidence supports the narrower conclusion that **global temperature scaling provided negligible validation-NLL improvement for this model under the evaluated experimental conditions**.
 
-More importantly, calibration alone does not answer whether prediction-level uncertainty can identify unreliable outputs.
+More importantly, probability calibration does not answer whether prediction-level uncertainty can identify unreliable model outputs.
 
 That unresolved question provides the direct scientific motivation for:
 
@@ -992,5 +1054,5 @@ That unresolved question provides the direct scientific motivation for:
 ---
 
 **Experiment Status:** Complete  
-**Primary Verified Calibration Result:** Negligible validation NLL improvement after temperature scaling  
+**Primary Verified Calibration Evidence:** `T = 1.007948`; validation NLL `0.097432 → 0.097427`  
 **Next Experiment:** EXP-003 — Uncertainty Quantification and Error Detection
