@@ -6,31 +6,37 @@ Does predictive uncertainty provide useful information for distinguishing
 incorrect from correct predictions produced by the frozen baseline
 medical-image classifier?
 
-This experiment:
+Experimental sequence
+---------------------
+1. Load the PneumoniaMNIST held-out test split.
+2. Reconstruct the frozen EXP-001 BaselineCNN architecture.
+3. Load the frozen EXP-001 checkpoint.
+4. Generate held-out test predictions.
+5. Verify that the predictions reproduce the EXP-001 baseline.
+6. Compute deterministic binary predictive entropy.
+7. Treat prediction error as the positive error-detection class.
+8. Evaluate uncertainty using AUROC and AUPRC.
+9. Produce prediction-level and summary artifacts.
+10. Save artifacts only after integrity checks succeed.
 
-1. Loads the PneumoniaMNIST test split.
-2. Reconstructs the frozen EXP-001 BaselineCNN architecture.
-3. Loads the frozen EXP-001 checkpoint.
-4. Generates test-set probabilities.
-5. Computes deterministic binary predictive entropy.
-6. Treats prediction error as the positive class.
-7. Evaluates uncertainty using error-detection AUROC and AUPRC.
-8. Saves prediction-level and summary artifacts.
+Research integrity
+------------------
+EXP-003 does not retrain the baseline classifier.
 
-Important
----------
-The test set is used only for final evaluation.
+The held-out test set is not used to select the classification threshold,
+uncertainty method, model parameters, or uncertainty parameters.
 
-No uncertainty threshold, model parameter, or method is selected using
-test-set results.
+Predictive entropy is evaluated as a deterministic uncertainty baseline.
+It must not be interpreted as a complete estimate of epistemic uncertainty.
 
-Predictive entropy is a deterministic uncertainty baseline and should not
-be interpreted as complete epistemic uncertainty.
+EXP-003 artifacts are not saved unless the loaded checkpoint reproduces the
+frozen EXP-001 baseline prediction behaviour.
 """
 
 from __future__ import annotations
 
 import random
+from dataclasses import asdict
 from pathlib import Path
 
 import medmnist
@@ -39,7 +45,10 @@ import pandas as pd
 import torch
 import torch.nn as nn
 from medmnist import INFO
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import (
+    accuracy_score,
+    confusion_matrix,
+)
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
@@ -55,14 +64,43 @@ from src.uncertainty.entropy import (
 )
 
 
-# ---------------------------------------------------------------------------
+# =============================================================================
 # Experiment configuration
-# ---------------------------------------------------------------------------
+# =============================================================================
+
+EXPERIMENT_ID = "EXP-003"
+EXPERIMENT_TITLE = "Predictive Uncertainty for Error Detection"
 
 SEED = 42
+
 DATA_FLAG = "pneumoniamnist"
+
 BATCH_SIZE = 64
+
 CLASSIFICATION_THRESHOLD = 0.5
+
+HIGH_CONFIDENCE_THRESHOLD = 0.90
+
+
+# =============================================================================
+# Frozen EXP-001 reference evidence
+# =============================================================================
+
+EXPECTED_TEST_SAMPLES = 624
+
+EXPECTED_ACCURACY = 0.884615
+
+EXPECTED_TN = 168
+EXPECTED_FP = 66
+EXPECTED_FN = 6
+EXPECTED_TP = 384
+
+ACCURACY_TOLERANCE = 1e-6
+
+
+# =============================================================================
+# Paths
+# =============================================================================
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
@@ -94,35 +132,40 @@ ERROR_DETECTION_METRICS_PATH = (
     / "experiment_003_error_detection_metrics.csv"
 )
 
+BASELINE_INTEGRITY_PATH = (
+    RESULTS_TABLE_DIR
+    / "experiment_003_baseline_integrity.csv"
+)
 
-# ---------------------------------------------------------------------------
+
+# =============================================================================
 # Reproducibility
-# ---------------------------------------------------------------------------
+# =============================================================================
 
 
 def set_seed(seed: int = SEED) -> None:
     """Set random seeds used by the experiment."""
 
     random.seed(seed)
+
     np.random.seed(seed)
+
     torch.manual_seed(seed)
 
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
 
 
-# ---------------------------------------------------------------------------
-# Frozen EXP-001 model architecture
-# ---------------------------------------------------------------------------
+# =============================================================================
+# Frozen EXP-001 model
+# =============================================================================
 
 
 class BaselineCNN(nn.Module):
-    """CNN architecture used in EXP-001.
+    """CNN architecture used by the frozen EXP-001 baseline.
 
-    This architecture must remain consistent with the model whose parameters
-    are stored in the frozen EXP-001 checkpoint.
-
-    EXP-003 does not retrain this model.
+    EXP-003 must evaluate the existing EXP-001 model rather than train a
+    replacement classifier.
     """
 
     def __init__(self) -> None:
@@ -136,8 +179,9 @@ class BaselineCNN(nn.Module):
                 padding=1,
             ),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2),
-
+            nn.MaxPool2d(
+                kernel_size=2,
+            ),
             nn.Conv2d(
                 in_channels=16,
                 out_channels=32,
@@ -145,7 +189,9 @@ class BaselineCNN(nn.Module):
                 padding=1,
             ),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2),
+            nn.MaxPool2d(
+                kernel_size=2,
+            ),
         )
 
         self.classifier = nn.Sequential(
@@ -161,21 +207,26 @@ class BaselineCNN(nn.Module):
             ),
         )
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self,
+        x: torch.Tensor,
+    ) -> torch.Tensor:
         """Return raw binary-classification logits."""
 
         features = self.features(x)
 
-        return self.classifier(features)
+        logits = self.classifier(features)
+
+        return logits
 
 
-# ---------------------------------------------------------------------------
-# Data
-# ---------------------------------------------------------------------------
+# =============================================================================
+# Dataset
+# =============================================================================
 
 
 def create_test_loader() -> DataLoader:
-    """Create the frozen PneumoniaMNIST test-set loader."""
+    """Create the frozen PneumoniaMNIST held-out test loader."""
 
     info = INFO[DATA_FLAG]
 
@@ -196,6 +247,13 @@ def create_test_loader() -> DataLoader:
         download=True,
     )
 
+    if len(test_dataset) != EXPECTED_TEST_SAMPLES:
+        raise RuntimeError(
+            "PneumoniaMNIST test-set integrity check failed. "
+            f"Expected {EXPECTED_TEST_SAMPLES} samples but "
+            f"received {len(test_dataset)}."
+        )
+
     test_loader = DataLoader(
         dataset=test_dataset,
         batch_size=BATCH_SIZE,
@@ -205,22 +263,22 @@ def create_test_loader() -> DataLoader:
     return test_loader
 
 
-# ---------------------------------------------------------------------------
-# Model loading
-# ---------------------------------------------------------------------------
+# =============================================================================
+# Frozen checkpoint loading
+# =============================================================================
 
 
 def load_frozen_model(
     device: torch.device,
 ) -> BaselineCNN:
-    """Load the frozen EXP-001 CNN checkpoint."""
+    """Load the frozen EXP-001 model checkpoint."""
 
     if not CHECKPOINT_PATH.exists():
         raise FileNotFoundError(
-            "EXP-001 checkpoint was not found at:\n"
-            f"{CHECKPOINT_PATH}\n\n"
-            "EXP-003 must use the frozen EXP-001 model. "
-            "Do not train a replacement model inside this experiment."
+            "The frozen EXP-001 checkpoint was not found.\n\n"
+            f"Expected checkpoint:\n{CHECKPOINT_PATH}\n\n"
+            "EXP-003 must evaluate the frozen EXP-001 classifier. "
+            "A replacement model must not be trained inside EXP-003."
         )
 
     model = BaselineCNN().to(device)
@@ -230,8 +288,6 @@ def load_frozen_model(
         map_location=device,
     )
 
-    # Support either a raw state_dict or a checkpoint dictionary
-    # containing a model_state_dict entry.
     if (
         isinstance(checkpoint, dict)
         and "model_state_dict" in checkpoint
@@ -250,9 +306,9 @@ def load_frozen_model(
     return model
 
 
-# ---------------------------------------------------------------------------
+# =============================================================================
 # Inference
-# ---------------------------------------------------------------------------
+# =============================================================================
 
 
 def collect_predictions(
@@ -263,6 +319,7 @@ def collect_predictions(
     """Generate labels and probabilities for the held-out test set."""
 
     all_labels: list[np.ndarray] = []
+
     all_probabilities: list[np.ndarray] = []
 
     model.eval()
@@ -273,18 +330,34 @@ def collect_predictions(
 
             images = images.to(device)
 
-            labels = labels.view(-1).cpu().numpy()
+            logits = model(
+                images
+            ).view(-1)
 
-            logits = model(images).view(-1)
+            probabilities = torch.sigmoid(
+                logits
+            )
 
-            probabilities = torch.sigmoid(logits)
+            labels_array = (
+                labels
+                .view(-1)
+                .cpu()
+                .numpy()
+                .astype(np.int64)
+            )
+
+            probabilities_array = (
+                probabilities
+                .cpu()
+                .numpy()
+            )
 
             all_labels.append(
-                labels.astype(np.int64)
+                labels_array
             )
 
             all_probabilities.append(
-                probabilities.cpu().numpy()
+                probabilities_array
             )
 
     y_true = np.concatenate(
@@ -295,26 +368,170 @@ def collect_predictions(
         all_probabilities
     )
 
+    if len(y_true) != EXPECTED_TEST_SAMPLES:
+        raise RuntimeError(
+            "Inference produced an unexpected number of labels. "
+            f"Expected {EXPECTED_TEST_SAMPLES}, "
+            f"received {len(y_true)}."
+        )
+
+    if len(probabilities) != EXPECTED_TEST_SAMPLES:
+        raise RuntimeError(
+            "Inference produced an unexpected number of probabilities. "
+            f"Expected {EXPECTED_TEST_SAMPLES}, "
+            f"received {len(probabilities)}."
+        )
+
     return (
         y_true,
         probabilities,
     )
 
 
-# ---------------------------------------------------------------------------
-# Artifact creation
-# ---------------------------------------------------------------------------
+# =============================================================================
+# Prediction construction
+# =============================================================================
+
+
+def probabilities_to_predictions(
+    probabilities: np.ndarray,
+) -> np.ndarray:
+    """Convert probabilities to frozen-threshold binary predictions."""
+
+    return (
+        probabilities
+        >= CLASSIFICATION_THRESHOLD
+    ).astype(np.int64)
+
+
+# =============================================================================
+# EXP-001 baseline integrity verification
+# =============================================================================
+
+
+def calculate_baseline_integrity(
+    y_true: np.ndarray,
+    predicted_labels: np.ndarray,
+) -> dict[str, int | float | bool]:
+    """Calculate baseline statistics required for integrity verification."""
+
+    accuracy = float(
+        accuracy_score(
+            y_true,
+            predicted_labels,
+        )
+    )
+
+    matrix = confusion_matrix(
+        y_true,
+        predicted_labels,
+        labels=[0, 1],
+    )
+
+    if matrix.shape != (2, 2):
+        raise RuntimeError(
+            "Unexpected confusion-matrix shape during baseline "
+            f"verification: {matrix.shape}"
+        )
+
+    tn, fp, fn, tp = matrix.ravel()
+
+    accuracy_match = bool(
+        np.isclose(
+            accuracy,
+            EXPECTED_ACCURACY,
+            atol=ACCURACY_TOLERANCE,
+            rtol=0.0,
+        )
+    )
+
+    confusion_matrix_match = bool(
+        int(tn) == EXPECTED_TN
+        and int(fp) == EXPECTED_FP
+        and int(fn) == EXPECTED_FN
+        and int(tp) == EXPECTED_TP
+    )
+
+    baseline_verified = bool(
+        accuracy_match
+        and confusion_matrix_match
+    )
+
+    return {
+        "n_samples": int(len(y_true)),
+        "accuracy": accuracy,
+        "expected_accuracy": EXPECTED_ACCURACY,
+        "accuracy_match": accuracy_match,
+        "tn": int(tn),
+        "expected_tn": EXPECTED_TN,
+        "fp": int(fp),
+        "expected_fp": EXPECTED_FP,
+        "fn": int(fn),
+        "expected_fn": EXPECTED_FN,
+        "tp": int(tp),
+        "expected_tp": EXPECTED_TP,
+        "confusion_matrix_match": confusion_matrix_match,
+        "baseline_verified": baseline_verified,
+    }
+
+
+def enforce_baseline_integrity(
+    baseline_integrity: dict[str, int | float | bool],
+) -> None:
+    """Stop EXP-003 if the frozen EXP-001 baseline is not reproduced."""
+
+    if not bool(
+        baseline_integrity["baseline_verified"]
+    ):
+        message = f"""
+EXP-001 BASELINE INTEGRITY CHECK FAILED
+
+EXP-003 has been stopped before uncertainty evidence was saved.
+
+Observed:
+    Accuracy: {baseline_integrity['accuracy']}
+    TN:       {baseline_integrity['tn']}
+    FP:       {baseline_integrity['fp']}
+    FN:       {baseline_integrity['fn']}
+    TP:       {baseline_integrity['tp']}
+
+Expected:
+    Accuracy: {EXPECTED_ACCURACY}
+    TN:       {EXPECTED_TN}
+    FP:       {EXPECTED_FP}
+    FN:       {EXPECTED_FN}
+    TP:       {EXPECTED_TP}
+
+Possible causes include:
+- incorrect checkpoint;
+- preprocessing mismatch;
+- dataset mismatch;
+- architecture mismatch;
+- label handling difference;
+- threshold difference.
+
+The discrepancy must be investigated before EXP-003 results are accepted.
+"""
+
+        raise RuntimeError(
+            message.strip()
+        )
+
+
+# =============================================================================
+# Prediction-level evidence
+# =============================================================================
 
 
 def build_prediction_table(
     y_true: np.ndarray,
     probabilities: np.ndarray,
 ) -> pd.DataFrame:
-    """Build the prediction-level EXP-003 evidence table."""
+    """Build the EXP-003 prediction-level evidence table."""
 
-    predicted_labels = (
-        probabilities >= CLASSIFICATION_THRESHOLD
-    ).astype(np.int64)
+    predicted_labels = probabilities_to_predictions(
+        probabilities
+    )
 
     correctness = prediction_correctness(
         y_true=y_true,
@@ -347,7 +564,9 @@ def build_prediction_table(
                 len(y_true),
                 dtype=np.int64,
             ),
-            "true_label": y_true.astype(np.int64),
+            "true_label": y_true.astype(
+                np.int64
+            ),
             "predicted_probability": probabilities,
             "predicted_label": predicted_labels,
             "correct": correctness,
@@ -361,93 +580,26 @@ def build_prediction_table(
     return table
 
 
-def build_uncertainty_summary(
-    prediction_table: pd.DataFrame,
-) -> pd.DataFrame:
-    """Create descriptive uncertainty statistics."""
-
-    summary = summarize_uncertainty_by_correctness(
-        correctness=prediction_table["correct"].to_numpy(),
-        uncertainty_scores=prediction_table[
-            "predictive_entropy"
-        ].to_numpy(),
-    )
-
-    rows = []
-
-    for group_name, statistics in summary.items():
-
-        row = {
-            "prediction_group": group_name,
-            **statistics,
-        }
-
-        rows.append(row)
-
-    return pd.DataFrame(rows)
+# =============================================================================
+# Prediction-level integrity checks
+# =============================================================================
 
 
-def build_error_detection_metrics(
-    prediction_table: pd.DataFrame,
-) -> pd.DataFrame:
-    """Calculate primary EXP-003 error-detection metrics."""
-
-    metrics = evaluate_error_detection(
-        error_targets=prediction_table[
-            "error"
-        ].to_numpy(),
-        uncertainty_scores=prediction_table[
-            "predictive_entropy"
-        ].to_numpy(),
-    )
-
-    accuracy = accuracy_score(
-        prediction_table["true_label"],
-        prediction_table["predicted_label"],
-    )
-
-    metrics_row = {
-        "n_samples": metrics.n_samples,
-        "n_errors": metrics.n_errors,
-        "n_correct": (
-            metrics.n_samples
-            - metrics.n_errors
-        ),
-        "accuracy": float(accuracy),
-        "error_prevalence": metrics.error_prevalence,
-        "error_detection_auroc": (
-            metrics.error_detection_auroc
-        ),
-        "error_detection_auprc": (
-            metrics.error_detection_auprc
-        ),
-    }
-
-    return pd.DataFrame(
-        [metrics_row]
-    )
-
-
-# ---------------------------------------------------------------------------
-# Integrity checks
-# ---------------------------------------------------------------------------
-
-
-def run_integrity_checks(
+def run_prediction_integrity_checks(
     prediction_table: pd.DataFrame,
 ) -> None:
-    """Check assumptions before EXP-003 artifacts are accepted."""
+    """Validate prediction-level evidence before artifact creation."""
 
     if prediction_table.empty:
         raise RuntimeError(
             "Prediction table is empty."
         )
 
-    if len(prediction_table) != 624:
+    if len(prediction_table) != EXPECTED_TEST_SAMPLES:
         raise RuntimeError(
-            "Unexpected PneumoniaMNIST test-set size. "
-            f"Expected 624 samples but received "
-            f"{len(prediction_table)}."
+            "Prediction table contains an unexpected number "
+            f"of samples. Expected {EXPECTED_TEST_SAMPLES}, "
+            f"received {len(prediction_table)}."
         )
 
     required_columns = {
@@ -473,29 +625,16 @@ def run_integrity_checks(
             f"{sorted(missing_columns)}"
         )
 
-    numeric_columns = [
-        "predicted_probability",
-        "confidence",
-        "predictive_entropy",
-        "normalized_predictive_entropy",
-    ]
-
-    for column in numeric_columns:
-
-        values = prediction_table[
-            column
-        ].to_numpy()
-
-        if not np.all(
-            np.isfinite(values)
-        ):
-            raise RuntimeError(
-                f"{column} contains non-finite values."
-            )
-
     probabilities = prediction_table[
         "predicted_probability"
     ].to_numpy()
+
+    if not np.all(
+        np.isfinite(probabilities)
+    ):
+        raise RuntimeError(
+            "Predicted probabilities contain non-finite values."
+        )
 
     if np.any(
         (probabilities < 0.0)
@@ -505,11 +644,39 @@ def run_integrity_checks(
             "Predicted probabilities fall outside [0, 1]."
         )
 
+    confidence = prediction_table[
+        "confidence"
+    ].to_numpy()
+
+    if not np.all(
+        np.isfinite(confidence)
+    ):
+        raise RuntimeError(
+            "Confidence values contain non-finite values."
+        )
+
+    if np.any(
+        (confidence < 0.5)
+        | (confidence > 1.0)
+    ):
+        raise RuntimeError(
+            "Confidence values fall outside the expected [0.5, 1.0] range."
+        )
+
     entropy = prediction_table[
         "predictive_entropy"
     ].to_numpy()
 
-    if np.any(entropy < 0.0):
+    if not np.all(
+        np.isfinite(entropy)
+    ):
+        raise RuntimeError(
+            "Predictive entropy contains non-finite values."
+        )
+
+    if np.any(
+        entropy < 0.0
+    ):
         raise RuntimeError(
             "Predictive entropy contains negative values."
         )
@@ -518,7 +685,24 @@ def run_integrity_checks(
         "normalized_predictive_entropy"
     ].to_numpy()
 
+    if not np.all(
+        np.isfinite(normalized_entropy)
+    ):
+        raise RuntimeError(
+            "Normalized predictive entropy contains "
+            "non-finite values."
+        )
+
     tolerance = 1e-10
+
+    if np.any(
+        normalized_entropy
+        < -tolerance
+    ):
+        raise RuntimeError(
+            "Normalized predictive entropy contains "
+            "unexpected negative values."
+        )
 
     if np.any(
         normalized_entropy
@@ -545,14 +729,261 @@ def run_integrity_checks(
         ),
     ):
         raise RuntimeError(
-            "Correctness and error indicators "
-            "are inconsistent."
+            "Correctness and error indicators are inconsistent."
+        )
+
+    expected_sample_ids = np.arange(
+        EXPECTED_TEST_SAMPLES,
+        dtype=np.int64,
+    )
+
+    observed_sample_ids = prediction_table[
+        "sample_id"
+    ].to_numpy()
+
+    if not np.array_equal(
+        observed_sample_ids,
+        expected_sample_ids,
+    ):
+        raise RuntimeError(
+            "Prediction sample ordering is inconsistent."
         )
 
 
-# ---------------------------------------------------------------------------
-# Reporting
-# ---------------------------------------------------------------------------
+# =============================================================================
+# Uncertainty summaries
+# =============================================================================
+
+
+def build_uncertainty_summary(
+    prediction_table: pd.DataFrame,
+) -> pd.DataFrame:
+    """Create descriptive uncertainty statistics by correctness."""
+
+    summary = summarize_uncertainty_by_correctness(
+        correctness=prediction_table[
+            "correct"
+        ].to_numpy(),
+        uncertainty_scores=prediction_table[
+            "predictive_entropy"
+        ].to_numpy(),
+    )
+
+    rows: list[dict[str, object]] = []
+
+    for group_name, statistics in summary.items():
+
+        row = {
+            "prediction_group": group_name,
+            **statistics,
+        }
+
+        rows.append(
+            row
+        )
+
+    return pd.DataFrame(
+        rows
+    )
+
+
+# =============================================================================
+# Error-detection metrics
+# =============================================================================
+
+
+def build_error_detection_metrics(
+    prediction_table: pd.DataFrame,
+) -> pd.DataFrame:
+    """Calculate the primary EXP-003 error-detection metrics."""
+
+    metrics = evaluate_error_detection(
+        error_targets=prediction_table[
+            "error"
+        ].to_numpy(),
+        uncertainty_scores=prediction_table[
+            "predictive_entropy"
+        ].to_numpy(),
+    )
+
+    metrics_dict = asdict(
+        metrics
+    )
+
+    accuracy = float(
+        accuracy_score(
+            prediction_table[
+                "true_label"
+            ],
+            prediction_table[
+                "predicted_label"
+            ],
+        )
+    )
+
+    metrics_row = {
+        "experiment_id": EXPERIMENT_ID,
+        "uncertainty_method": "binary_predictive_entropy",
+        "n_samples": metrics_dict[
+            "n_samples"
+        ],
+        "n_errors": metrics_dict[
+            "n_errors"
+        ],
+        "n_correct": (
+            metrics_dict["n_samples"]
+            - metrics_dict["n_errors"]
+        ),
+        "accuracy": accuracy,
+        "error_prevalence": metrics_dict[
+            "error_prevalence"
+        ],
+        "error_detection_auroc": metrics_dict[
+            "error_detection_auroc"
+        ],
+        "error_detection_auprc": metrics_dict[
+            "error_detection_auprc"
+        ],
+    }
+
+    return pd.DataFrame(
+        [metrics_row]
+    )
+
+
+# =============================================================================
+# High-confidence error analysis
+# =============================================================================
+
+
+def identify_high_confidence_errors(
+    prediction_table: pd.DataFrame,
+) -> pd.DataFrame:
+    """Return incorrect predictions with confidence >= configured threshold."""
+
+    high_confidence_errors = prediction_table[
+        (prediction_table["error"] == 1)
+        & (
+            prediction_table["confidence"]
+            >= HIGH_CONFIDENCE_THRESHOLD
+        )
+    ].copy()
+
+    return high_confidence_errors.sort_values(
+        by="predictive_entropy",
+        ascending=True,
+    )
+
+
+# =============================================================================
+# Artifact persistence
+# =============================================================================
+
+
+def save_artifacts(
+    prediction_table: pd.DataFrame,
+    uncertainty_summary: pd.DataFrame,
+    metrics_table: pd.DataFrame,
+    baseline_integrity: dict[str, int | float | bool],
+) -> None:
+    """Save EXP-003 evidence after all required checks succeed."""
+
+    if not bool(
+        baseline_integrity["baseline_verified"]
+    ):
+        raise RuntimeError(
+            "Artifact saving was blocked because the "
+            "EXP-001 baseline was not verified."
+        )
+
+    RESULTS_TABLE_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    baseline_integrity_table = pd.DataFrame(
+        [baseline_integrity]
+    )
+
+    prediction_table.to_csv(
+        PREDICTION_RESULTS_PATH,
+        index=False,
+    )
+
+    uncertainty_summary.to_csv(
+        UNCERTAINTY_SUMMARY_PATH,
+        index=False,
+    )
+
+    metrics_table.to_csv(
+        ERROR_DETECTION_METRICS_PATH,
+        index=False,
+    )
+
+    baseline_integrity_table.to_csv(
+        BASELINE_INTEGRITY_PATH,
+        index=False,
+    )
+
+
+# =============================================================================
+# Console reporting
+# =============================================================================
+
+
+def print_baseline_integrity(
+    baseline_integrity: dict[str, int | float | bool],
+) -> None:
+    """Print EXP-001 reproduction information."""
+
+    print()
+    print("=" * 72)
+    print("EXP-001 BASELINE INTEGRITY")
+    print("=" * 72)
+
+    print(
+        f"Samples: "
+        f"{baseline_integrity['n_samples']}"
+    )
+
+    print(
+        f"Observed accuracy: "
+        f"{float(baseline_integrity['accuracy']):.6f}"
+    )
+
+    print(
+        f"Expected accuracy: "
+        f"{EXPECTED_ACCURACY:.6f}"
+    )
+
+    print()
+    print("Observed confusion matrix")
+
+    print(
+        f"TN={baseline_integrity['tn']}  "
+        f"FP={baseline_integrity['fp']}  "
+        f"FN={baseline_integrity['fn']}  "
+        f"TP={baseline_integrity['tp']}"
+    )
+
+    print()
+    print("Expected confusion matrix")
+
+    print(
+        f"TN={EXPECTED_TN}  "
+        f"FP={EXPECTED_FP}  "
+        f"FN={EXPECTED_FN}  "
+        f"TP={EXPECTED_TP}"
+    )
+
+    print()
+
+    print(
+        "Baseline verified: "
+        f"{baseline_integrity['baseline_verified']}"
+    )
+
+    print("=" * 72)
 
 
 def print_experiment_summary(
@@ -560,17 +991,20 @@ def print_experiment_summary(
     uncertainty_summary: pd.DataFrame,
     prediction_table: pd.DataFrame,
 ) -> None:
-    """Print a concise EXP-003 result summary."""
+    """Print a concise EXP-003 experimental summary."""
 
     metrics = metrics_table.iloc[0]
 
     print()
     print("=" * 72)
-    print("EXP-003 — Predictive Uncertainty for Error Detection")
+    print(
+        f"{EXPERIMENT_ID} — {EXPERIMENT_TITLE}"
+    )
     print("=" * 72)
 
     print(
-        f"Samples: {int(metrics['n_samples'])}"
+        f"Samples: "
+        f"{int(metrics['n_samples'])}"
     )
 
     print(
@@ -579,7 +1013,8 @@ def print_experiment_summary(
     )
 
     print(
-        f"Errors: {int(metrics['n_errors'])}"
+        f"Errors: "
+        f"{int(metrics['n_errors'])}"
     )
 
     print(
@@ -603,7 +1038,7 @@ def print_experiment_summary(
     )
 
     print()
-    print("Uncertainty by correctness")
+    print("UNCERTAINTY BY CORRECTNESS")
     print("-" * 72)
 
     print(
@@ -612,15 +1047,16 @@ def print_experiment_summary(
         )
     )
 
-    high_confidence_errors = prediction_table[
-        (prediction_table["error"] == 1)
-        & (prediction_table["confidence"] >= 0.90)
-    ]
+    high_confidence_errors = (
+        identify_high_confidence_errors(
+            prediction_table
+        )
+    )
 
     print()
     print(
         "High-confidence errors "
-        "(confidence >= 0.90): "
+        f"(confidence >= {HIGH_CONFIDENCE_THRESHOLD:.2f}): "
         f"{len(high_confidence_errors)}"
     )
 
@@ -628,72 +1064,89 @@ def print_experiment_summary(
 
         lowest_entropy_error = (
             high_confidence_errors
-            .sort_values(
-                "predictive_entropy",
-                ascending=True,
-            )
             .iloc[0]
         )
 
+        print()
         print(
-            "Lowest-entropy high-confidence error:"
+            "Lowest-entropy high-confidence error"
         )
 
         print(
-            f"  sample_id: "
+            f"sample_id: "
             f"{int(lowest_entropy_error['sample_id'])}"
         )
 
         print(
-            f"  true_label: "
+            f"true_label: "
             f"{int(lowest_entropy_error['true_label'])}"
         )
 
         print(
-            f"  predicted_label: "
+            f"predicted_label: "
             f"{int(lowest_entropy_error['predicted_label'])}"
         )
 
         print(
-            f"  probability: "
+            f"probability: "
             f"{lowest_entropy_error['predicted_probability']:.6f}"
         )
 
         print(
-            f"  confidence: "
+            f"confidence: "
             f"{lowest_entropy_error['confidence']:.6f}"
         )
 
         print(
-            f"  predictive_entropy: "
+            f"predictive_entropy: "
             f"{lowest_entropy_error['predictive_entropy']:.6f}"
         )
 
     print()
-    print("Artifacts")
+    print("ARTIFACTS")
     print("-" * 72)
 
-    print(PREDICTION_RESULTS_PATH)
-    print(UNCERTAINTY_SUMMARY_PATH)
-    print(ERROR_DETECTION_METRICS_PATH)
+    print(
+        BASELINE_INTEGRITY_PATH
+    )
+
+    print(
+        PREDICTION_RESULTS_PATH
+    )
+
+    print(
+        UNCERTAINTY_SUMMARY_PATH
+    )
+
+    print(
+        ERROR_DETECTION_METRICS_PATH
+    )
 
     print("=" * 72)
 
 
-# ---------------------------------------------------------------------------
+# =============================================================================
 # Main experiment
-# ---------------------------------------------------------------------------
+# =============================================================================
 
 
 def main() -> None:
-    """Execute EXP-003."""
+    """Execute EXP-003 with baseline-integrity protection."""
+
+    print()
+    print("=" * 72)
+    print(
+        f"{EXPERIMENT_ID}: {EXPERIMENT_TITLE}"
+    )
+    print("=" * 72)
 
     print(
-        "Starting EXP-003: "
-        "Predictive Uncertainty for Error Detection"
+        "Setting reproducibility controls..."
     )
 
-    set_seed(SEED)
+    set_seed(
+        SEED
+    )
 
     device = torch.device(
         "cuda"
@@ -705,16 +1158,19 @@ def main() -> None:
         f"Device: {device}"
     )
 
+    print()
     print(
-        "Loading PneumoniaMNIST test split..."
+        "Loading frozen PneumoniaMNIST test split..."
     )
 
     test_loader = create_test_loader()
 
     print(
-        f"Test samples: {len(test_loader.dataset)}"
+        f"Test samples: "
+        f"{len(test_loader.dataset)}"
     )
 
+    print()
     print(
         "Loading frozen EXP-001 checkpoint..."
     )
@@ -723,6 +1179,11 @@ def main() -> None:
         device=device
     )
 
+    print(
+        "Checkpoint loaded successfully."
+    )
+
+    print()
     print(
         "Generating frozen-model predictions..."
     )
@@ -733,6 +1194,34 @@ def main() -> None:
         device=device,
     )
 
+    predicted_labels = probabilities_to_predictions(
+        probabilities
+    )
+
+    print()
+    print(
+        "Verifying EXP-001 baseline integrity..."
+    )
+
+    baseline_integrity = calculate_baseline_integrity(
+        y_true=y_true,
+        predicted_labels=predicted_labels,
+    )
+
+    print_baseline_integrity(
+        baseline_integrity
+    )
+
+    enforce_baseline_integrity(
+        baseline_integrity
+    )
+
+    print()
+    print(
+        "EXP-001 baseline reproduced successfully."
+    )
+
+    print()
     print(
         "Computing deterministic predictive entropy..."
     )
@@ -743,15 +1232,20 @@ def main() -> None:
     )
 
     print(
-        "Running evidence-integrity checks..."
+        "Running prediction-level integrity checks..."
     )
 
-    run_integrity_checks(
+    run_prediction_integrity_checks(
         prediction_table
     )
 
     print(
-        "Evaluating uncertainty as an error detector..."
+        "Prediction-level integrity checks passed."
+    )
+
+    print()
+    print(
+        "Evaluating uncertainty as an error-detection signal..."
     )
 
     uncertainty_summary = (
@@ -766,30 +1260,31 @@ def main() -> None:
         )
     )
 
-    RESULTS_TABLE_DIR.mkdir(
-        parents=True,
-        exist_ok=True,
+    print()
+    print(
+        "Saving verified EXP-003 artifacts..."
     )
 
-    prediction_table.to_csv(
-        PREDICTION_RESULTS_PATH,
-        index=False,
+    save_artifacts(
+        prediction_table=prediction_table,
+        uncertainty_summary=uncertainty_summary,
+        metrics_table=metrics_table,
+        baseline_integrity=baseline_integrity,
     )
 
-    uncertainty_summary.to_csv(
-        UNCERTAINTY_SUMMARY_PATH,
-        index=False,
-    )
-
-    metrics_table.to_csv(
-        ERROR_DETECTION_METRICS_PATH,
-        index=False,
+    print(
+        "Artifacts saved successfully."
     )
 
     print_experiment_summary(
         metrics_table=metrics_table,
         uncertainty_summary=uncertainty_summary,
         prediction_table=prediction_table,
+    )
+
+    print()
+    print(
+        "EXP-003 execution completed."
     )
 
 
