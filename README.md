@@ -1,103 +1,141 @@
 # Trustworthy Healthcare AI
 
-## Uncertainty-Aware, Robust, and Reproducible Machine Learning for Healthcare
+> **Research portfolio investigating uncertainty, calibration, robustness, and multimodal machine learning for trustworthy healthcare AI.**
 
-This repository documents an evolving research programme investigating **trustworthy artificial intelligence for healthcare**, with an initial focus on medical image classification, probability calibration, uncertainty quantification, selective prediction, distribution shift, and robustness.
+This repository contains an evolving research programme focused on a central question:
 
-The long-term direction is to extend these principles toward **multimodal and generative healthcare AI**, while building an integrated research prototype in which reliability mechanisms are evaluated experimentally before they become system capabilities.
+> **How can machine-learning systems for healthcare communicate and manage predictive uncertainty, particularly when their predictions may be wrong or when the data distribution changes?**
 
-The central principle of the project is:
+The work begins with controlled medical-image classification experiments and progressively develops toward uncertainty-aware, robust, multimodal, and generative healthcare AI.
 
-> **Strong predictive performance alone is not sufficient evidence that an AI system can be trusted.**
+The repository follows an **evidence-first research workflow**:
+
+```mermaid
+flowchart LR
+    A[Research Question] --> B[Experimental Design]
+    B --> C[Implementation]
+    C --> D[Verification]
+    D --> E[Experiment]
+    E --> F[Evidence]
+    F --> G[Analysis]
+    G --> H[Interpretation]
+    H --> I[System Capability]
+```
+
+Results are documented only after experimental evidence has been generated and checked.
 
 ---
 
 ## Research Motivation
 
-Machine-learning systems can achieve strong predictive performance while still producing unreliable behaviour.
+High predictive accuracy alone is insufficient for high-stakes machine-learning applications.
 
-A model may:
+A healthcare AI model may:
 
-- make highly confident incorrect predictions;
+- achieve strong aggregate performance;
 - produce poorly calibrated probabilities;
-- fail to express increased uncertainty when incorrect;
-- deteriorate under distribution shift;
-- remain overconfident on unfamiliar inputs; or
-- fail unpredictably under perturbation.
+- make highly confident incorrect predictions;
+- fail to recognize uncertainty;
+- degrade under distribution shift;
+- remain confidently wrong when encountering unfamiliar data.
 
-These limitations are particularly important in high-stakes domains such as healthcare.
+These behaviours motivate research beyond conventional predictive performance.
 
-This project therefore investigates not only:
+This project therefore investigates:
 
-> **Can the model make accurate predictions?**
+```text
+Prediction performance
+        ↓
+Probability calibration
+        ↓
+Predictive uncertainty
+        ↓
+Selective prediction
+        ↓
+Distribution shift
+        ↓
+Robustness
+        ↓
+Multimodal healthcare AI
+        ↓
+Trustworthy generative AI
+```
 
-but also:
+The long-term objective is not merely to build a model that predicts.
 
-> **Can the model recognise when its predictions may be unreliable?**
-
----
-
-## Central Research Question
-
-The broader research programme investigates:
-
-> **How can uncertainty-aware and robustness-oriented methods improve the reliability of machine-learning systems for healthcare decision support?**
-
-The initial experiments use medical image classification as a controlled foundation before extending toward more complex multimodal and generative AI settings.
-
----
-
-## Research Objectives
-
-The project aims to:
-
-1. establish a reproducible medical-image classification baseline;
-2. evaluate predictive performance beyond accuracy alone;
-3. investigate probability calibration and model overconfidence;
-4. quantify prediction-level uncertainty;
-5. evaluate whether uncertainty can identify model errors;
-6. investigate uncertainty-based selective prediction and referral;
-7. evaluate reliability under distribution shift;
-8. evaluate robustness under controlled perturbation;
-9. extend validated principles toward multimodal healthcare AI;
-10. investigate trustworthy generative and vision-language AI; and
-11. integrate experimentally supported components into a complete research prototype.
+It is to investigate how a healthcare AI system can provide evidence about **when its outputs may be unreliable**.
 
 ---
 
-## Research Progress
+# Current Research Question
+
+The current research stage focuses on uncertainty quantification.
+
+### EXP-003 Research Question
+
+> **Does predictive uncertainty provide useful information for distinguishing incorrect from correct predictions produced by the baseline medical-image classifier?**
+
+The first uncertainty baseline uses deterministic binary predictive entropy and evaluates uncertainty as an **error-detection signal**.
+
+EXP-003 is implemented, but its experimental evaluation has not yet been completed.
+
+No EXP-003 result is claimed in this README.
+
+---
+
+# Research Progress
 
 | Experiment | Research Question | Status |
 |---|---|---|
-| EXP-001 — Baseline Classification | How well does the baseline model perform? | ✅ Complete |
-| EXP-002 — Probability Calibration | Can we trust the model's predicted probabilities? | ✅ Complete |
-| EXP-003 — Uncertainty Quantification | Can uncertainty help identify risky predictions? | 🔬 Next |
-| EXP-004 — Selective Prediction | Can uncertainty-based referral reduce risk among retained predictions? | 📋 Planned |
-| EXP-005 — Distribution Shift | What happens when the data distribution changes? | 📋 Planned |
-| EXP-006 — Robustness | Does model reliability survive challenging conditions? | 📋 Planned |
-| Future | Multimodal Healthcare AI | 🔭 Future |
-| Future | Trustworthy Generative / Vision-Language AI | 🔭 Future |
-| Future | Integrated Trustworthy AI Research Prototype | 🔭 Future |
+| **EXP-001** | How effectively can a baseline CNN distinguish pneumonia-positive from pneumonia-negative chest X-ray images? | ✅ Complete |
+| **EXP-002** | How well calibrated are the baseline model's probability estimates? | ✅ Complete |
+| **EXP-003** | Can predictive uncertainty distinguish incorrect from correct predictions? | 🧪 Implementation complete — evaluation pending |
+| **EXP-004** | Can uncertainty support selective prediction or referral? | 📋 Planned |
+| **EXP-005** | How does the model behave under distribution shift? | 📋 Planned |
+| **EXP-006** | How robust are predictions and uncertainty under perturbation? | 📋 Planned |
+| **Future** | How can trustworthy mechanisms extend to multimodal and generative healthcare AI? | 🔭 Research direction |
 
-The roadmap is evidence-driven and may be refined as new experimental findings emerge.
+---
+
+# Experimental Progression
+
+```mermaid
+flowchart TD
+    A["EXP-001<br/>Baseline Classification"] --> B["EXP-002<br/>Probability Calibration"]
+
+    B --> C["EXP-003<br/>Predictive Uncertainty"]
+
+    C --> D["EXP-004<br/>Selective Prediction"]
+
+    D --> E["EXP-005<br/>Distribution Shift"]
+
+    E --> F["EXP-006<br/>Robustness"]
+
+    F --> G["Multimodal Healthcare AI"]
+
+    G --> H["Trustworthy Generative AI"]
+```
+
+Each experiment is intended to answer a specific research question and provide evidence for—or against—the next system capability.
 
 ---
 
 # EXP-001 — Baseline Medical Image Classification
 
-## Objective
+**Status:** Complete
 
-EXP-001 established a reproducible predictive baseline using **PneumoniaMNIST** from the MedMNIST benchmark collection.
+EXP-001 established the predictive baseline used by subsequent experiments.
 
-The research question was:
+### Dataset
 
-> **How effectively can a baseline convolutional neural network distinguish pneumonia-positive from pneumonia-negative chest X-ray images using the PneumoniaMNIST benchmark?**
+**PneumoniaMNIST — MedMNIST v2**
 
----
+Binary chest X-ray classification:
 
-## Dataset
+- `0` — Normal
+- `1` — Pneumonia
 
-The experiment uses the predefined PneumoniaMNIST splits.
+Dataset split:
 
 | Split | Samples |
 |---|---:|
@@ -106,121 +144,139 @@ The experiment uses the predefined PneumoniaMNIST splits.
 | Test | 624 |
 | **Total** | **5,856** |
 
-The task is binary classification:
+The training distribution was imbalanced:
 
-```text
-0 → Normal
-1 → Pneumonia
-```
+- Normal: 1,214
+- Pneumonia: 3,494
+- Pneumonia proportion: 74.21%
 
-The training distribution is imbalanced:
-
-```text
-Normal:     1,214
-Pneumonia:  3,494
-```
-
-Therefore, accuracy is not interpreted in isolation.
+No class resampling was applied during the baseline experiment.
 
 ---
 
-## Baseline Model
+## Baseline Architecture
 
-The initial model is a compact convolutional neural network consisting of:
-
-```text
-Input
-  ↓
-Conv2D
-  ↓
-ReLU
-  ↓
-MaxPool
-  ↓
-Conv2D
-  ↓
-ReLU
-  ↓
-MaxPool
-  ↓
-Fully Connected Layer
-  ↓
-Binary Logit
+```mermaid
+flowchart TD
+    A["Chest X-ray<br/>1 × 28 × 28"] --> B["Conv2D<br/>1 → 16"]
+    B --> C[ReLU]
+    C --> D[MaxPool]
+    D --> E["Conv2D<br/>16 → 32"]
+    E --> F[ReLU]
+    F --> G[MaxPool]
+    G --> H[Flatten]
+    H --> I["Linear<br/>1568 → 64"]
+    I --> J[ReLU]
+    J --> K["Linear<br/>64 → 1"]
+    K --> L[Logit]
+    L --> M[Sigmoid]
+    M --> N[Pneumonia Probability]
 ```
 
-Training configuration includes:
+Training configuration:
 
-```text
-Loss:        BCEWithLogitsLoss
-Optimizer:   Adam
-Learning Rate: 0.001
-Epochs:      10
-Batch Size:  64
-Seed:        42
-```
+- Loss: `BCEWithLogitsLoss`
+- Optimizer: Adam
+- Learning rate: `0.001`
+- Epochs: `10`
+- Random seed: `42`
 
 ---
 
-## Baseline Results
+## EXP-001 Results
 
 Held-out test performance:
 
 | Metric | Result |
 |---|---:|
-| Accuracy | 0.8846 |
-| AUROC | 0.9370 |
-| Sensitivity | 0.9846 |
-| Specificity | 0.7179 |
-| Precision | 0.8533 |
-| F1-score | 0.9143 |
+| Accuracy | **0.884615** |
+| AUROC | **0.936993** |
+| Sensitivity | **0.9846** |
+| Specificity | **0.7179** |
+| Precision | **0.8533** |
+| F1-score | **0.914286** |
 
 Confusion matrix:
 
 | | Predicted Normal | Predicted Pneumonia |
 |---|---:|---:|
-| Actual Normal | 168 | 66 |
-| Actual Pneumonia | 6 | 384 |
+| **Actual Normal** | 168 | 66 |
+| **Actual Pneumonia** | 6 | 384 |
 
-The model demonstrated strong discrimination and high sensitivity, but substantially lower specificity.
+The model substantially exceeded the majority-class accuracy baseline of approximately **74.21%**.
+
+However, aggregate predictive performance exposed only part of the model's behaviour.
 
 ---
 
-## Important Observation
+## Critical EXP-001 Observation
 
-EXP-001 also exposed a central trustworthiness problem.
-
-An incorrectly classified normal image received approximately:
+An incorrect normal case received approximately:
 
 > **99.98% predicted probability of pneumonia**
 
-This demonstrated that strong aggregate predictive performance does not guarantee reliable confidence for individual predictions.
+This is an important research observation.
 
-That observation motivated EXP-002.
+The model was not merely wrong.
+
+It was **highly confident while wrong**.
+
+That motivates the transition from:
+
+```text
+Can the model predict?
+```
+
+to:
+
+```text
+Can the model recognize when its prediction may be unreliable?
+```
+
+This observation became one of the motivations for EXP-002 and EXP-003.
+
+Detailed evidence:
+
+**[`docs/EXP_001_BASELINE.md`](docs/EXP_001_BASELINE.md)**
 
 ---
 
 # EXP-002 — Probability Calibration
 
-## Research Question
+**Status:** Complete
 
-> **How well calibrated are the probability estimates produced by the baseline CNN, and does the model exhibit overconfidence when making incorrect predictions?**
+Strong classification performance does not guarantee that predicted probabilities accurately represent empirical reliability.
 
-The experiment investigated:
+EXP-002 therefore investigated the calibration behaviour of the frozen EXP-001 classifier.
 
-- reliability diagrams;
+The experiment evaluated:
+
+- reliability behaviour;
 - Expected Calibration Error;
 - Brier score;
 - confidence behaviour;
-- high-confidence errors; and
+- high-confidence errors;
 - temperature scaling.
 
 ---
 
 ## Temperature Scaling
 
-Temperature scaling was fitted using the **validation set**, not the held-out test set.
+Temperature scaling transforms logits using:
 
-The final validation-fitted temperature was:
+\[
+p = \sigma\left(\frac{z}{T}\right)
+\]
+
+where:
+
+- \(z\) is the original logit;
+- \(T\) is a learned positive temperature;
+- \(\sigma\) is the sigmoid function.
+
+The temperature was fitted using validation data rather than the held-out test set.
+
+The corrected fitted temperature was:
 
 ```text
 T = 1.007948
@@ -233,244 +289,368 @@ Before: 0.097432
 After:  0.097427
 ```
 
-The improvement was negligible.
+The improvement was negligible in this experimental setting.
 
-The appropriate conclusion is therefore limited to the current experimental setting:
+This does **not** imply that temperature scaling is generally ineffective in medical AI.
 
-> **Validation-fitted global temperature scaling produced negligible improvement for the baseline model under the evaluated conditions.**
+It indicates that global temperature scaling provided little validation NLL improvement for this specific model, dataset, and experimental configuration.
 
-This does **not** establish that temperature scaling is generally ineffective for medical AI.
+Detailed evidence:
 
----
-
-## Why EXP-002 Matters
-
-Calibration is a population-level property.
-
-Even a reasonably calibrated model can still make individual high-confidence errors.
-
-This creates the next research question:
-
-> **Can prediction-level uncertainty provide useful information about model failure that confidence alone cannot?**
-
-That question defines EXP-003.
+**[`docs/EXP_002_CALIBRATION.md`](docs/EXP_002_CALIBRATION.md)**
 
 ---
 
-# Research Direction
+# EXP-003 — Predictive Uncertainty
 
-The experimental programme progresses through increasingly demanding questions:
+**Status:** Implementation complete — experimental evaluation pending
+
+EXP-003 moves from population-level probability calibration toward prediction-level uncertainty.
+
+The central question is:
+
+> **Can uncertainty help distinguish predictions that are wrong from predictions that are correct?**
+
+---
+
+## Deterministic Uncertainty Baseline
+
+The first method is binary predictive entropy:
+
+\[
+H(p) = -p\log(p) - (1-p)\log(1-p)
+\]
+
+For binary classification:
 
 ```text
-Predictive Performance
-        ↓
-Probability Calibration
-        ↓
-Uncertainty Quantification
-        ↓
-Selective Prediction
-        ↓
-Distribution Shift
-        ↓
-Robustness
-        ↓
-Multimodal Healthcare AI
-        ↓
-Trustworthy Generative / Vision-Language AI
-        ↓
-Integrated Trustworthy AI Research Prototype
+p ≈ 0.50
+    ↓
+High predictive entropy
+    ↓
+High ambiguity
 ```
 
-Each stage should generate evidence before the corresponding capability is integrated into the wider system.
+while:
+
+```text
+p ≈ 0 or p ≈ 1
+    ↓
+Low predictive entropy
+    ↓
+High model confidence
+```
+
+This creates an important potential failure case:
+
+```text
+Incorrect prediction
+        +
+Extreme probability
+        ↓
+Low entropy
+        ↓
+Confidently wrong
+```
+
+EXP-003 is designed to measure this behaviour rather than assume entropy is a reliable uncertainty signal.
 
 ---
 
-# EXP-003 — Uncertainty Quantification
+## Error Detection
 
-**Status: Next**
+Prediction error is treated as the positive class:
 
-EXP-003 will investigate whether uncertainty estimates provide useful information about prediction failure.
+```text
+Correct prediction   → error = 0
+Incorrect prediction → error = 1
+```
 
-The initial research question is:
+Predictive entropy is then evaluated as the error-detection score.
 
-> **Can uncertainty distinguish incorrect predictions from correct predictions in the baseline medical-image classification setting?**
+Primary evaluation metrics:
 
-Planned evaluation includes:
-
-- predictive entropy;
-- uncertainty distributions for correct and incorrect predictions;
 - error-detection AUROC;
 - error-detection AUPRC;
-- analysis of low-uncertainty errors;
-- comparison with an explicit uncertainty method where justified; and
-- preparation for selective-prediction evaluation.
+- error prevalence.
 
-The existing EXP-001 CNN contains no dropout layers.
+Supporting analysis includes:
 
-Therefore, MC Dropout cannot simply be applied to the existing checkpoint without modifying the architecture and retraining.
-
-The uncertainty methodology will be defined explicitly before implementation.
-
----
-
-# From Experiments to a Complete System
-
-This repository is not intended to remain a collection of disconnected notebooks.
-
-Validated research components will progressively contribute to a broader system.
-
-The target research architecture is:
-
-```text
-Healthcare Input
-      ↓
-Data Processing
-      ↓
-Predictive / Multimodal Model
-      ↓
-Prediction or Generated Output
-      ↓
-Trustworthiness Layer
-      ├── Calibration
-      ├── Uncertainty
-      ├── Distribution-Shift Evaluation
-      └── Robustness
-      ↓
-Risk Assessment
-      ↓
-Lower-Risk Output ──────────────► Research Interface
-      │
-      └── Higher Uncertainty
-                ↓
-          Flag / Refer
-                ↓
-          Human Review
-                ↓
-        Audit and Monitoring
-```
-
-This is a **research prototype direction**, not a clinically validated diagnostic system.
+- uncertainty distributions for correct predictions;
+- uncertainty distributions for incorrect predictions;
+- descriptive statistics;
+- high-confidence errors;
+- low-entropy errors.
 
 ---
 
-# Research, Engineering, and Publication Tracks
+## EXP-003 Integrity Gate
 
-The project develops through three connected tracks.
+Before EXP-003 evidence can be saved, the experiment runner checks whether the frozen EXP-001 baseline is reproduced.
 
-## Research Track
-
-```text
-Research Question
-      ↓
-Hypothesis
-      ↓
-Experiment
-      ↓
-Evaluation
-      ↓
-Evidence
-```
-
-## System Engineering Track
+Expected baseline:
 
 ```text
-Validated Evidence
-      ↓
-Reusable Component
-      ↓
-Tested Pipeline
-      ↓
-Integrated Research System
+Test samples: 624
+Accuracy:     0.884615
+
+TN = 168
+FP = 66
+FN = 6
+TP = 384
 ```
 
-## Publication Track
+Experimental flow:
 
-```text
-Experimental Evidence
-      ↓
-Analysis
-      ↓
-Figures and Tables
-      ↓
-Research Contribution
-      ↓
-Manuscript / Preprint
+```mermaid
+flowchart TD
+    A[Load Frozen EXP-001 Checkpoint] --> B[Run Held-Out Test Inference]
+
+    B --> C{Baseline Reproduced?}
+
+    C -->|No| D[Stop Experiment]
+
+    C -->|Yes| E[Compute Predictive Entropy]
+
+    E --> F[Identify Correct and Incorrect Predictions]
+
+    F --> G[Evaluate Error Detection]
+
+    G --> H["AUROC + AUPRC + Error Prevalence"]
+
+    H --> I[Validate Artifacts]
+
+    I --> J[Save EXP-003 Evidence]
 ```
 
-The tracks remain connected through experimental evidence.
+This protects the experiment from silently evaluating uncertainty on a different model, preprocessing pipeline, or prediction configuration.
 
 ---
 
-# Evaluation Philosophy
+## EXP-003 Current State
 
-The project deliberately separates different dimensions of model behaviour.
+| Component | Status |
+|---|---|
+| Research question | ✅ Defined |
+| Experimental design | ✅ Frozen |
+| Experimental configuration | ✅ Frozen |
+| Entropy implementation | ✅ Implemented |
+| Entropy tests | ✅ Written |
+| Error-detection evaluation | ✅ Implemented |
+| Evaluation tests | ✅ Written |
+| Experiment runner | ✅ Implemented |
+| Baseline integrity gate | ✅ Implemented |
+| Test execution | ⏳ Pending validation |
+| Baseline reproduction | ⏳ Pending validation |
+| Held-out experiment execution | ⏳ Pending |
+| Experimental evidence | ⏳ Pending |
+| Scientific interpretation | ⏳ Pending |
 
-```text
-Accuracy ≠ Calibration
+No EXP-003 experimental performance is reported until these validation and execution stages are complete.
 
-Calibration ≠ Uncertainty
+### EXP-003 Documentation
 
-Uncertainty ≠ Robustness
-
-Strong AUROC ≠ Trustworthy AI
-```
-
-Evaluation therefore considers complementary dimensions including:
-
-- predictive performance;
-- discrimination;
-- calibration;
-- uncertainty;
-- error detection;
-- selective prediction;
-- distribution shift;
-- robustness; and
-- eventually multimodal and generative reliability.
-
-Negative or negligible results are retained when the experimental procedure is valid.
+- **[Experimental Design](experiments/EXP_003_DESIGN.md)**
+- **[Frozen Configuration](experiments/EXP_003_CONFIG.md)**
+- **[Experiment Runner](experiments/experiment_003_uncertainty.py)**
 
 ---
 
-# Reproducibility
+# From Calibration to Uncertainty
 
-The project uses:
+Calibration and uncertainty address related but different questions.
 
-```text
-Python 3.11
-uv
-PyTorch
-MedMNIST
-scikit-learn
-Jupyter
+```mermaid
+flowchart LR
+    A[Model Prediction] --> B["EXP-002<br/>Calibration"]
+
+    A --> C["EXP-003<br/>Uncertainty"]
+
+    B --> D["Do predicted probabilities<br/>reflect empirical reliability?"]
+
+    C --> E["Can uncertainty help<br/>identify prediction errors?"]
 ```
 
-Environment information is maintained through:
+A model may be reasonably calibrated at the population level while still producing dangerous high-confidence errors for individual samples.
 
-```text
-.python-version
-pyproject.toml
-uv.lock
+The two analyses should therefore not be treated as interchangeable.
+
+---
+
+# Research Methodology
+
+The repository follows a controlled experimental process.
+
+```mermaid
+flowchart TD
+    A[Research Question] --> B[Hypothesis]
+
+    B --> C[Pre-Experiment Design]
+
+    C --> D[Configuration Freeze]
+
+    D --> E[Implementation]
+
+    E --> F[Unit Verification]
+
+    F --> G[Checkpoint / Data Integrity]
+
+    G --> H[Held-Out Evaluation]
+
+    H --> I[Artifact Validation]
+
+    I --> J[Statistical Analysis]
+
+    J --> K[Interpretation]
+
+    K --> L[Limitations]
+
+    L --> M[System Implication]
+
+    M --> N[Research Documentation]
 ```
 
-The project aims to preserve traceability from:
+This separates:
+
+1. what was planned;
+2. what was implemented;
+3. what was observed;
+4. what can reasonably be concluded.
+
+Detailed methodology:
+
+**[`docs/METHODOLOGY.md`](docs/METHODOLOGY.md)**
+
+---
+
+# Evidence-Driven System Development
+
+The research programme is also being used to develop reusable trustworthy-AI capabilities.
+
+```mermaid
+flowchart LR
+    A[Experiment] --> B[Evidence]
+
+    B --> C{Evidence Supports Capability?}
+
+    C -->|No| D[Document Limitation]
+
+    C -->|Yes| E[Validated Component]
+
+    E --> F[Research System]
+```
+
+Examples:
+
+| Experiment | Candidate System Capability |
+|---|---|
+| EXP-001 | Prediction engine |
+| EXP-002 | Calibration evaluation |
+| EXP-003 | Uncertainty engine |
+| EXP-004 | Selective prediction / referral |
+| EXP-005 | Distribution-shift evaluation |
+| EXP-006 | Robustness evaluation |
+
+A component is not considered validated merely because it has been implemented.
+
+Its system role must be supported by experimental evidence.
+
+---
+
+# Target Research Architecture
+
+The longer-term research direction extends beyond binary medical-image classification.
+
+The target architecture is:
+
+```mermaid
+flowchart TD
+    A[Medical Images]
+    B[Clinical Text]
+    C[Structured Clinical Data]
+
+    A --> D[Image Encoder]
+    B --> E[Text Encoder]
+    C --> F[Tabular Encoder]
+
+    D --> G[Multimodal Fusion]
+    E --> G
+    F --> G
+
+    G --> H["Predictive / Multimodal / Generative Model"]
+
+    H --> I["Prediction / Generated Output"]
+
+    I --> J[Trustworthiness Layer]
+
+    J --> K[Calibration]
+    J --> L[Uncertainty]
+    J --> M[Distribution Shift]
+    J --> N[Robustness]
+
+    K --> O[Risk Assessment]
+    L --> O
+    M --> O
+    N --> O
+
+    O --> P{Elevated Risk?}
+
+    P -->|No| Q[Research Output]
+    P -->|Yes| R[Human Review]
+
+    Q --> S[Research Interface]
+    R --> S
+
+    S --> T[Audit and Monitoring]
+```
+
+### Important
+
+This diagram represents the **target research architecture**.
+
+It does **not** imply that multimodal fusion, generative modelling, clinical interfaces, or monitoring are currently implemented.
+
+The present experimental system is substantially narrower:
 
 ```text
-Research Question
+PneumoniaMNIST image
         ↓
-Code
+Baseline CNN
         ↓
-Environment
+Logit
         ↓
-Dataset
+Probability
         ↓
-Model
+Prediction evaluation
         ↓
-Evaluation
+Calibration analysis
         ↓
-Artifact
-        ↓
-Interpretation
+Predictive uncertainty evaluation
 ```
+
+The architecture will expand only as the corresponding research components are implemented and evaluated.
+
+---
+
+# Current vs Target Capability
+
+| Capability | Current State |
+|---|---|
+| Medical-image input | ✅ Implemented |
+| Binary classification | ✅ Implemented |
+| Predictive evaluation | ✅ Implemented |
+| Probability calibration analysis | ✅ Implemented |
+| Temperature scaling | ✅ Evaluated |
+| Deterministic predictive entropy | 🧪 Implemented; evaluation pending |
+| Error-detection evaluation | 🧪 Implemented; evaluation pending |
+| Selective prediction | 📋 Planned |
+| Distribution-shift evaluation | 📋 Planned |
+| Robustness evaluation | 📋 Planned |
+| Multimodal input | 🔭 Future research |
+| Vision-language modelling | 🔭 Future research |
+| Generative healthcare AI | 🔭 Future research |
+| Research interface | 🔭 Future research |
+| Audit / monitoring layer | 🔭 Future research |
 
 ---
 
@@ -479,165 +659,303 @@ Interpretation
 ```text
 trustworthy-healthcare-ai/
 │
-├── docs/
-│   ├── RESEARCH_PLAN.md
-│   ├── SYSTEM_ARCHITECTURE.md
-│   ├── METHODOLOGY.md
-│   ├── EXPERIMENTS.md
-│   ├── EVALUATION.md
-│   ├── REPRODUCIBILITY.md
-│   ├── PUBLICATION_PLAN.md
-│   ├── research_log.md
-│   ├── experiment_001_baseline.md
-│   └── experiment_002_calibration.md
+├── README.md
+├── pyproject.toml
+├── uv.lock
+├── .python-version
 │
-├── experiments/
+├── src/
+│   ├── __init__.py
+│   │
+│   ├── data/
+│   │   └── __init__.py
+│   │
+│   ├── models/
+│   │   └── __init__.py
+│   │
+│   ├── evaluation/
+│   │   ├── __init__.py
+│   │   └── uncertainty_metrics.py
+│   │
+│   └── uncertainty/
+│       ├── __init__.py
+│       └── entropy.py
 │
 ├── notebooks/
 │   ├── 01_baseline_medical_imaging.ipynb
 │   └── 02_confidence_calibration.ipynb
 │
+├── experiments/
+│   ├── EXP_003_DESIGN.md
+│   ├── EXP_003_CONFIG.md
+│   └── experiment_003_uncertainty.py
+│
 ├── results/
 │   ├── figures/
 │   ├── models/
+│   │   └── experiment_001_baseline_cnn.pt
 │   └── tables/
 │
-├── src/
-│   ├── data/
-│   ├── evaluation/
-│   ├── models/
-│   └── uncertainty/
-│
 ├── tests/
+│   ├── test_entropy.py
+│   └── test_uncertainty_metrics.py
 │
-├── .python-version
-├── pyproject.toml
-├── uv.lock
-└── README.md
+└── docs/
+    ├── EVALUATION.md
+    ├── EXPERIMENTS.md
+    ├── EXP_001_BASELINE.md
+    ├── EXP_002_CALIBRATION.md
+    ├── METHODOLOGY.md
+    ├── PUBLICATION_PLAN.md
+    ├── REPRODUCIBILITY.md
+    ├── RESEARCH_LOG.md
+    ├── RESEARCH_PLAN.md
+    └── SYSTEM_ARCHITECTURE.md
 ```
-
-The structure will evolve as experimentally validated components become reusable research software.
 
 ---
 
-# Research Documentation
+# Documentation Map
 
-The documentation is organised so that the project can be followed from the central research problem through methodology, experimentation, evaluation, reproducibility, and publication planning.
+The repository separates executive-level navigation from detailed research documentation.
 
-## Research Framework
+| Document | Purpose |
+|---|---|
+| **[Research Plan](docs/RESEARCH_PLAN.md)** | Research direction, questions, and progression |
+| **[Experiments Registry](docs/EXPERIMENTS.md)** | Canonical experiment status and evidence index |
+| **[Methodology](docs/METHODOLOGY.md)** | Experimental methodology and research controls |
+| **[Evaluation](docs/EVALUATION.md)** | Evaluation principles and metrics |
+| **[Reproducibility](docs/REPRODUCIBILITY.md)** | Reproduction and experimental integrity |
+| **[System Architecture](docs/SYSTEM_ARCHITECTURE.md)** | Evidence-driven system architecture |
+| **[Publication Plan](docs/PUBLICATION_PLAN.md)** | Research publication strategy |
+| **[Research Log](docs/RESEARCH_LOG.md)** | Chronological research record |
+| **[EXP-001 Report](docs/EXP_001_BASELINE.md)** | Baseline classification experiment |
+| **[EXP-002 Report](docs/EXP_002_CALIBRATION.md)** | Calibration experiment |
+| **[EXP-003 Design](experiments/EXP_003_DESIGN.md)** | Frozen uncertainty experiment design |
+| **[EXP-003 Configuration](experiments/EXP_003_CONFIG.md)** | Frozen execution configuration |
 
-- [Research Plan](docs/RESEARCH_PLAN.md) — research problem, aims, questions, objectives, scope, and roadmap.
-- [System Architecture](docs/SYSTEM_ARCHITECTURE.md) — progression from experimental evidence toward an integrated trustworthy AI research prototype.
-- [Methodology](docs/METHODOLOGY.md) — datasets, experimental design, modelling procedures, controls, and research methodology.
-- [Experiment Registry](docs/EXPERIMENTS.md) — master registry of planned, active, and completed experiments.
-- [Evaluation Framework](docs/EVALUATION.md) — evaluation dimensions, metrics, interpretation, and limitations.
-- [Reproducibility Framework](docs/REPRODUCIBILITY.md) — environment, experiment traceability, artifacts, and reproduction standards.
-- [Publication Plan](docs/PUBLICATION_PLAN.md) — pathway from experimental evidence toward a potential research manuscript.
+---
 
-## Experimental Evidence
+# Reproducibility
 
-- [EXP-001 — Baseline Medical Image Classification](docs/experiment_001_baseline.md)
-- [EXP-002 — Probability Calibration](docs/experiment_002_calibration.md)
+The project uses:
 
-## Research Progress
+- Python 3.11;
+- `uv` for dependency management;
+- `pyproject.toml`;
+- `uv.lock`;
+- fixed random seeds where applicable;
+- frozen model checkpoints;
+- explicit dataset splits;
+- held-out test evaluation;
+- experiment-specific artifacts;
+- unit verification for reusable research functions.
 
-- [Research Log](docs/research_log.md) — chronological record of experiments, findings, limitations, and research decisions.
+Environment reconstruction:
 
-Future experiment reports will be added after the corresponding experiments are completed.
+```bash
+uv sync
+```
+
+Detailed reproducibility protocol:
+
+**[`docs/REPRODUCIBILITY.md`](docs/REPRODUCIBILITY.md)**
+
+---
+
+# Research Integrity Principles
+
+The project follows several rules intended to reduce avoidable experimental bias.
+
+### 1. Test data are not training data
+
+The held-out test set is reserved for final evaluation.
+
+### 2. Experimental decisions should precede test inspection
+
+Methods, thresholds, and experimental conditions should be defined before interpreting held-out results whenever feasible.
+
+### 3. Negative findings remain findings
+
+A method is not considered successful merely because it was implemented.
+
+Weak or negative results may provide evidence about limitations and motivate subsequent experiments.
+
+### 4. Results are not written in advance
+
+Documentation distinguishes planned methodology from observed evidence.
+
+### 5. Claims remain proportional to evidence
+
+The repository does not claim clinical validation, regulatory readiness, diagnostic safety, or production clinical deployment.
+
+This is a **research system and experimental portfolio**.
+
+---
+
+# Technology Stack
+
+Current core technologies include:
+
+- Python
+- PyTorch
+- TorchVision
+- MedMNIST
+- NumPy
+- pandas
+- scikit-learn
+- Matplotlib
+- Jupyter
+- `uv`
+- Git
+- GitHub
+
+The technology stack will expand only when required by subsequent research stages.
+
+---
+
+# Research Direction
+
+The project is progressing toward research in:
+
+- uncertainty-aware AI;
+- trustworthy machine learning;
+- medical image analysis;
+- robustness under distribution shift;
+- multimodal healthcare AI;
+- vision-language models;
+- generative AI for healthcare;
+- evaluation of AI reliability in high-stakes settings.
+
+The intended progression is:
+
+```mermaid
+flowchart LR
+    A[Medical Imaging] --> B[Calibration]
+    B --> C[Uncertainty]
+    C --> D[Selective Prediction]
+    D --> E[Distribution Shift]
+    E --> F[Robustness]
+    F --> G[Multimodal AI]
+    G --> H[Generative AI]
+    H --> I[Trustworthy Healthcare AI]
+```
 
 ---
 
 # Publication Direction
 
-The current provisional publication direction is:
+The current experimental programme is intended to support a research manuscript around the broader question of whether predictive performance alone adequately characterizes reliability in medical-image classification.
+
+A working direction is:
 
 > **Beyond Accuracy: Evaluating Uncertainty and Robustness in Deep Learning for Medical Image Classification Under Distribution Shift**
 
-This is a working direction rather than a predetermined paper title.
+The final manuscript scope and conclusions will depend on the completed experimental evidence.
 
-The final research contribution will be determined by the experimental evidence produced through EXP-003 and subsequent experiments.
+Publication planning:
 
-The project follows the principle:
-
-> **The evidence determines the claim — the desired claim does not determine which evidence is reported.**
+**[`docs/PUBLICATION_PLAN.md`](docs/PUBLICATION_PLAN.md)**
 
 ---
 
-# Current Limitations
+# Current Research Position
 
-The project is currently at an early research stage.
-
-Current experiments do not establish:
-
-- clinical effectiveness;
-- clinical safety;
-- generalisation across hospitals;
-- generalisation across patient populations;
-- robustness to real-world acquisition differences;
-- reliable uncertainty quantification;
-- effective uncertainty-based referral;
-- multimodal reliability;
-- generative AI reliability; or
-- suitability for clinical deployment.
-
-These are research questions rather than assumed capabilities.
-
----
-
-# Current Position
-
-The research programme currently stands at:
+The project has moved through:
 
 ```text
-EXP-001
-Baseline Classification
-        │
-        └── COMPLETE
-                ↓
-EXP-002
-Probability Calibration
-        │
-        └── COMPLETE
-                ↓
-EXP-003
-Uncertainty Quantification
-        │
-        └── NEXT
-                ↓
-EXP-004
-Selective Prediction
-                ↓
-EXP-005
-Distribution Shift
-                ↓
-EXP-006
-Robustness
-                ↓
-Multimodal / Generative Extension
-                ↓
-Integrated Trustworthy AI Research Prototype
-                ↓
-Research Publication
+Repository foundation
+        ↓
+Medical-image baseline
+        ↓
+Calibration evaluation
+        ↓
+Uncertainty methodology
+        ↓
+EXP-003 implementation
 ```
 
-The immediate research priority is:
+The current experimental boundary is:
 
-> **EXP-003 — determine whether uncertainty provides useful information about model failure.**
+```text
+EXP-003 implementation
+        ↓
+Verification
+        ↓
+Baseline integrity confirmation
+        ↓
+Held-out execution
+        ↓
+Experimental evidence
+        ↓
+Scientific interpretation
+```
+
+EXP-003 should not be marked complete until those evidence stages have been completed.
 
 ---
 
-## Research Status
+# Scope and Limitations
+
+Current limitations include:
+
+- a single medical-image benchmark;
+- binary classification;
+- low-resolution benchmark images;
+- a relatively small CNN;
+- no external clinical validation;
+- no current multimodal implementation;
+- no current generative-model implementation;
+- no current distribution-shift experiment;
+- no current robustness experiment;
+- no clinical deployment.
+
+These limitations are intentional boundaries of the current research stage rather than claims about the final research direction.
+
+---
+
+# Repository Principle
+
+The central principle of this repository is:
+
+> **Implementation demonstrates that something can be built. Evidence determines what can be claimed.**
+
+The project therefore progresses through controlled experiments rather than adding capabilities solely for demonstration.
+
+```text
+Research Question
+        ↓
+Experiment
+        ↓
+Evidence
+        ↓
+Interpretation
+        ↓
+Validated Capability
+        ↓
+Integrated Research System
+```
+
+---
+
+## Author
+
+**Hammed Fatai**
+
+Research interests:
+
+**Artificial Intelligence · Machine Learning · Trustworthy AI · Healthcare AI · Uncertainty Quantification · Multimodal AI · Generative AI**
+
+GitHub: **[@hammedfataio](https://github.com/hammedfataio)**
+
+---
+
+## Project Status
 
 **Active Research**
 
 Current stage:
 
-**EXP-003 — Uncertainty Quantification and Error Detection**
+> **EXP-003 — Predictive Uncertainty: implementation complete; experimental evaluation pending.**
 
-Completed evidence:
-
-**EXP-001 + EXP-002**
-
-Next objective:
-
-**Move from probability confidence toward explicit evaluation of prediction-level uncertainty.**
+The next repository update to EXP-003 results should occur only after verification, baseline integrity confirmation, experimental execution, and evidence inspection.
